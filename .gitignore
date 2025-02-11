@@ -1,0 +1,7 @@
+# ignore tests
+test*.*
+
+# ignore other files or folders
+__pycache__/
+.idea/
+.venv/
