@@ -70,7 +70,6 @@ class User:
             user_list = SqlConn.sql_query_result(list_query)
         else:
             user_list = Sqlite3Conn.sql_query_result(db_table, list_query)
-        # pprint(user_list)
         if User.at_cli:
             User.clear()
         print(f"{"ID":>3s}  {"Username":<15s} {"isAdmin":>7s}  {"isActive":>8s}")
@@ -232,7 +231,7 @@ class User:
     def delete_user_by_name():
         valid = False
         last_admin = False
-        while not valid and not last_admin:
+        while not valid:
             print("Delete user form")
             username = input("Username: ")
             print()
@@ -244,18 +243,20 @@ class User:
                 result = Sqlite3Conn.sql_query_result(db_table, select_query)
             for result_user in result:
                 if username == result_user[0]:
-                    select_query = f"""SELECT Username FROM {db_table} WHERE isAdmin = 1;"""
-                    if not User.use_sqlite3:
-                        result = SqlConn.sql_query_result(select_query)
-                    else:
-                        result = Sqlite3Conn.sql_query_result(db_table, select_query)
-                    if len(result) == 1:
-                        print(f"Cannot delete last admin {result[0][0]}")
-                        print()
-                        last_admin = True
-                        break
+                    if result_user[1]:
+                        select_query = f"""SELECT Username FROM {db_table} WHERE isAdmin = 1;"""
+                        if not User.use_sqlite3:
+                            result = SqlConn.sql_query_result(select_query)
+                        else:
+                            result = Sqlite3Conn.sql_query_result(db_table, select_query)
+                        if len(result) == 1:
+                            print(f"Cannot delete last admin {result[0][0]}")
+                            print()
+                            last_admin = True
+                            break
                     valid = True
-                    delete_user = User(result_user[0], is_active=result_user[1])
+                    if not last_admin and valid:
+                        delete_user = User(result_user[0], is_admin=result_user[1], is_active=result_user[2])
                     break
             if not valid and not last_admin:
                 print(f"Username {username} doesn't exist")
@@ -273,10 +274,8 @@ class User:
                         print("No user has been deleted")
                         print()
                         return
-        else:
-            if valid:
-                if not delete_user.is_active:
-                    delete_user.delete_user()
+            else:
+                delete_user.delete_user()
 
     def set_username(self):
         db_table = "Users_db"
