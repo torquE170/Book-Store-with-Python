@@ -50,7 +50,9 @@ class Login:
         exit_flag = False
         while not exit_flag:
             if user is not None:
-                if not user.is_active and not user.has_password or not user.is_active and user.has_password and user.is_admin:
+                if (not user.is_active and not user.has_password
+                    or not user.is_active and user.has_password and user.is_admin
+                    or user.is_active and not user.has_password):
                     user.user_setup()
                 elif user.session_id == "request_logout":
                     user = Login.login_user()
@@ -115,9 +117,14 @@ class Login:
                         if result_user[2]:
                             active_check = True
                         # rethink this
-                        if ((username_check and password_check) or
-                                (username_check and result_user[1] is None and not result_user[2]) or
-                                (username_check and password_check and not active_check)):
+                        if result_user[1] is None:
+                            has_password = 0
+                        else:
+                            has_password = 1
+                        if (username_check and password_check or
+                            username_check and result_user[1] is None and not result_user[2] or
+                            username_check and password_check and not active_check or
+                            username_check and active_check and not has_password):
                             select_query = f"""SELECT Username, fullName, isAdmin, isActive, passwordHash FROM {db_table} WHERE Username = "{result_user[0]}";"""
                             if not User.use_sqlite3:
                                 result_user = SqlConn.sql_query_result(select_query)[0]

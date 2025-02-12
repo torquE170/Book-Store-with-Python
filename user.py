@@ -57,8 +57,19 @@ class User:
                 print("Set a password.")
             self.set_password()
             self.set_active(1)
+        elif self.is_active and not self.has_password:
+            if self.is_admin:
+                print("As a security practice it is recommended that\n"
+                      "you change the name of admin account and its password")
+                self.set_username()
+                print("Set a admin password.")
+            else:
+                print("Set a password.")
+            self.set_password()
+            self.set_active(1)
         else:
-            print("You're not supposed to be here")
+            print("You're not supposed to be here.")
+
 
     @staticmethod
     def list_users():
