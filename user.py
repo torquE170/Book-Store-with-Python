@@ -3,12 +3,13 @@ import sys
 import uuid
 import bcrypt
 from getpass import getpass
-from sql_conn import SqlConn
+from sql_conn import SqlConn, Sqlite3Conn
 from configparser import ConfigParser
 
 
 class User:
     at_cli = 0  # toggle to 1 to use getpass when at cli for password entry
+    use_sqlite3 = 0  # toggle to 1 to use a local sqlite3 file as a database
     def __init__(self, username, full_name = None, is_admin = 0, is_active = 0, has_password = 0):
         self.session_id = uuid.uuid4()
         self.username = username
@@ -22,6 +23,7 @@ class User:
         try:
             user_settings = User.read_config("config.ini", "USER-SETTINGS")
             User.at_cli = int(user_settings["at_cli"])
+            User.use_sqlite3 = int(user_settings["use_sqlite3"])
         except ValueError:
             print("Invalid config file")
             exit()
@@ -64,9 +66,13 @@ class User:
         list_query = f"""
         SELECT ID, Username, isAdmin, isActive FROM {db_table};
         """
-        user_list = SqlConn.sql_query_result(list_query)
+        if not User.use_sqlite3:
+            user_list = SqlConn.sql_query_result(list_query)
+        else:
+            user_list = Sqlite3Conn.sql_query_result(db_table, list_query)
         # pprint(user_list)
-        User.clear()
+        if User.at_cli:
+            User.clear()
         print(f"{"ID":>3s}  {"Username":<15s} {"isAdmin":>7s}  {"isActive":>8s}")
         for user in user_list:
             print(f"{user[0]:>3}  {user[1]:<15s} {user[2]:>7}  {user[3]:>8}")
@@ -84,7 +90,10 @@ class User:
         SET isAdmin = {state}
         WHERE Username = "{self.username}";
         """
-        SqlConn.sql_query(update_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(update_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(update_query, db_table)
         if self.is_admin:
             been_admin = True
         else:
@@ -106,7 +115,10 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlConn.sql_query_result(select_query)
+            if not User.use_sqlite3:
+                result = SqlConn.sql_query_result(select_query)
+            else:
+                result = Sqlite3Conn.sql_query_result(db_table, select_query)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -126,7 +138,10 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlConn.sql_query_result(select_query)
+            if not User.use_sqlite3:
+                result = SqlConn.sql_query_result(select_query)
+            else:
+                result = Sqlite3Conn.sql_query_result(db_table, select_query)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -148,7 +163,10 @@ class User:
                 SET isActive = {state}
                 WHERE Username = "{self.username}";
                 """
-        SqlConn.sql_query(update_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(update_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(update_query,db_table)
         if self.is_active:
             been_active = True
         else:
@@ -175,7 +193,10 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlConn.sql_query_result(select_query)
+            if not User.use_sqlite3:
+                result = SqlConn.sql_query_result(select_query)
+            else:
+                result = Sqlite3Conn.sql_query_result(db_table, select_query)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -192,11 +213,17 @@ class User:
         delete_query = f"""DELETE FROM {db_table}
         WHERE Username = "{self.username}";
         """
-        SqlConn.sql_query(delete_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(delete_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(delete_query, db_table)
         select_query = f"""SELECT Username FROM {db_table}
         WHERE Username = "{self.username}"
         """
-        result = SqlConn.sql_query_result(select_query)
+        if not User.use_sqlite3:
+            result = SqlConn.sql_query_result(select_query)
+        else:
+            result = Sqlite3Conn.sql_query_result(db_table, select_query)
         if len(result) == 0:
             print(f"User {self.username} has been deleted")
             print()
@@ -211,11 +238,17 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isAdmin, isActive FROM {db_table};"""
-            result = SqlConn.sql_query_result(select_query)
+            if not User.use_sqlite3:
+                result = SqlConn.sql_query_result(select_query)
+            else:
+                result = Sqlite3Conn.sql_query_result(db_table, select_query)
             for result_user in result:
                 if username == result_user[0]:
                     select_query = f"""SELECT Username FROM {db_table} WHERE isAdmin = 1;"""
-                    result = SqlConn.sql_query_result(select_query)
+                    if not User.use_sqlite3:
+                        result = SqlConn.sql_query_result(select_query)
+                    else:
+                        result = Sqlite3Conn.sql_query_result(db_table, select_query)
                     if len(result) == 1:
                         print(f"Cannot delete last admin {result[0][0]}")
                         print()
@@ -252,7 +285,10 @@ class User:
         SET Username = "{username}"
         WHERE Username = "{self.username}";
         """
-        SqlConn.sql_query(update_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(update_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(update_query, db_table)
         self.username = username
 
     def set_password(self):
@@ -282,7 +318,10 @@ class User:
         passwordSalt = "{salt.decode("utf-8")}"
         WHERE Username = "{self.username}";
         """
-        SqlConn.sql_query(update_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(update_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(update_query, db_table)
         self.has_password = 1
         print("Password has been set")
         print()
@@ -295,7 +334,10 @@ class User:
                 SET fullName = "{full_name}"
                 WHERE Username = "{self.username}";
                 """
-        SqlConn.sql_query(update_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(update_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(update_query, db_table)
         self.full_name = full_name
         print(f"User {self.username} now has \"{self.full_name}\" as display name")
         print()
@@ -329,14 +371,20 @@ class User:
             passwordSalt = "{salt.decode("utf-8")}"
             WHERE Username = "{username}";
             """
-        SqlConn.sql_query(update_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(update_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(update_query, db_table)
         print("Password has been reset")
         print()
         query = f"""SELECT Username, isAdmin, isActive 
         FROM {db_table} 
         WHERE Username = "{username}";
         """
-        result = SqlConn.sql_query_result(query)[0]
+        if not User.use_sqlite3:
+            result = SqlConn.sql_query_result(query)[0]
+        else:
+            result = Sqlite3Conn.sql_query_result(db_table, query)[0]
         user = User(result[0], is_admin=result[1], is_active=result[2], has_password=1)
         return user
 
@@ -350,7 +398,10 @@ class User:
             username = input("Username: ")
             db_table = "Users_db"
             select_query = f"""SELECT Username FROM {db_table};"""
-            names = SqlConn.sql_query_result(select_query)
+            if not User.use_sqlite3:
+                names = SqlConn.sql_query_result(select_query)
+            else:
+                names = Sqlite3Conn.sql_query_result(db_table, select_query)
             for name in names:
                 if username == name[0]:
                     print(f"Username {name[0]} already exists")
@@ -370,12 +421,18 @@ class User:
     @staticmethod
     def add_new_user(username):
         db_table = "Users_db"
-        next_id = SqlConn.get_last_id(db_table) + 1
+        if not User.use_sqlite3:
+            next_id = SqlConn.get_last_id(db_table) + 1
+        else:
+            next_id = Sqlite3Conn.get_last_id(db_table) + 1
         insert_query = f"""
         INSERT INTO {db_table} (ID, Username, isAdmin, isActive)
         VALUES ({next_id}, "{username}",  0, 0);
         """
-        SqlConn.sql_query(insert_query, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(insert_query, db_table)
+        else:
+            Sqlite3Conn.sql_query(insert_query, db_table)
         print(f"User {username} has been registered and needs activation")
         print()
         return User(username, is_admin=0, is_active=0)
@@ -478,7 +535,10 @@ class User:
 
     @staticmethod
     def init_db(db_table, drop=False):
-        conn = SqlConn.connect_db()
+        if not User.use_sqlite3:
+            conn = SqlConn.connect_db()
+        else:
+            conn = Sqlite3Conn.connect_db(db_table)
         cursor = conn.cursor()
         query_init = f'''
         CREATE TABLE {db_table} (
@@ -492,15 +552,24 @@ class User:
         PRIMARY KEY(ID)
         );
         '''
-        SqlConn.sql_query(query_init, db_table, drop)
-        next_id = SqlConn.get_last_id(db_table) + 1
+        if not User.use_sqlite3:
+            SqlConn.sql_query(query_init, db_table, drop)
+        else:
+            Sqlite3Conn.sql_query(query_init, db_table, drop)
+        if not User.use_sqlite3:
+            next_id = SqlConn.get_last_id(db_table) + 1
+        else:
+            next_id = Sqlite3Conn.get_last_id(db_table) + 1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw("adminadmin", salt)
         query_admin = f'''
         INSERT INTO {db_table} (ID, Username, isAdmin, isActive, passwordHash, passwordSalt)
         VALUES ({next_id}, "admin",  1, 0, "{password_hash}", "{salt.decode("utf-8")}");
         '''
-        SqlConn.sql_query(query_admin, db_table)
+        if not User.use_sqlite3:
+            SqlConn.sql_query(query_admin, db_table)
+        else:
+            Sqlite3Conn.sql_query(query_admin, db_table)
 
     @staticmethod
     def hashpw(password, salt):

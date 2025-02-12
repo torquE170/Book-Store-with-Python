@@ -1,6 +1,8 @@
+import sqlite3
+
 from user import User
 from getpass import getpass
-from sql_conn import SqlConn
+from sql_conn import SqlConn, Sqlite3Conn
 from mysql.connector import ProgrammingError
 
 
@@ -25,7 +27,10 @@ class Login:
                     print()
                     db_table = "Users_db"
                     select_query = f"""SELECT Username, isActive FROM {db_table};"""
-                    result = SqlConn.sql_query_result(select_query)
+                    if not User.use_sqlite3:
+                        result = SqlConn.sql_query_result(select_query)
+                    else:
+                        result = Sqlite3Conn.sql_query_result(db_table, select_query)
                     for result_user in result:
                         if username == result_user[0]:
                             valid = True
@@ -90,8 +95,14 @@ class Login:
             db_table = "Users_db"
             select_query = f"""SELECT Username, passwordHash, isActive FROM {db_table};"""
             try:
-                result = SqlConn.sql_query_result(select_query)  # list of tuples
+                if not User.use_sqlite3:
+                    result = SqlConn.sql_query_result(select_query)  # list of tuples
+                else:
+                    result = Sqlite3Conn.sql_query_result(db_table, select_query)
             except ProgrammingError:
+                User.init_db("Users_db", True)
+                result = None
+            except sqlite3.OperationalError:
                 User.init_db("Users_db", True)
                 result = None
             if result is not None:
@@ -108,7 +119,10 @@ class Login:
                                 (username_check and result_user[1] is None and not result_user[2]) or
                                 (username_check and password_check and not active_check)):
                             select_query = f"""SELECT Username, fullName, isAdmin, isActive, passwordHash FROM {db_table} WHERE Username = "{result_user[0]}";"""
-                            result_user = SqlConn.sql_query_result(select_query)[0]
+                            if not User.use_sqlite3:
+                                result_user = SqlConn.sql_query_result(select_query)[0]
+                            else:
+                                result_user = Sqlite3Conn.sql_query_result(db_table, select_query)[0]
                             if result_user[4] is None:
                                 has_password = 0
                             else:

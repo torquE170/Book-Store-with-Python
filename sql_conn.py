@@ -1,7 +1,8 @@
 import os
+import sqlite3
 import mysql.connector
-from mysql.connector import Error, ProgrammingError
 from configparser import ConfigParser
+from mysql.connector import Error, ProgrammingError
 from mysql.connector.errors import OperationalError
 
 
@@ -21,8 +22,8 @@ class SqlConn(mysql.connector.MySQLConnection):
         cursor = conn.cursor()
         if drop and db_table != "":
             cursor.execute(f"""
-                           DROP TABLE IF EXISTS {db_table};
-                           """)  # Execute a drop command
+                DROP TABLE IF EXISTS {db_table};
+                """)  # Execute a drop command
             conn.commit()  # commit the drop query
         cursor.execute(db_query)
         conn.commit()
@@ -100,3 +101,61 @@ class SqlConn(mysql.connector.MySQLConnection):
         if self.is_connected() and self.initialized:
             self.close()
         return False
+
+class Sqlite3Conn(sqlite3.Connection):
+    def __init__(self, db_file):
+        super().__init__(db_file)
+
+    @staticmethod
+    def sql_query(db_query, db_table, drop=False):
+        conn = Sqlite3Conn.connect_db(db_table)
+        cursor = conn.cursor()
+        if drop and db_table != "":
+            cursor.execute(f"""
+                DROP TABLE IF EXISTS {db_table};
+                """)  # Execute a drop command
+            conn.commit()  # commit the drop query
+        cursor.execute(db_query)
+        conn.commit()
+        # conn.close()  # close the connection
+
+    @staticmethod
+    def get_last_id(db_table):
+        last_id = Sqlite3Conn.sql_query_result(db_table, f"""SELECT MAX(ID) FROM {db_table};""")
+        last_id = last_id[0][0]  # last_id is a list of tuples, so the value we want is at that index
+        if last_id is None:
+            last_id = 0
+        return last_id
+
+    @staticmethod
+    def sql_query_result(db_table, db_query, print_out=False):
+        conn = Sqlite3Conn.connect_db(db_table)
+        cursor = conn.cursor()  # cursor
+        try:
+            cursor.execute(db_query)  # execute the query
+        except ProgrammingError:
+            raise ProgrammingError
+        rows = cursor.fetchall()  # fetch all the output
+        if print_out:
+            for row in rows:
+                print(row)
+        # conn.close()  # close the connection
+        return rows
+
+    @staticmethod
+    def connect_db(db_table):
+        try:
+            conn = Sqlite3Conn(db_table)
+            return conn
+        except ValueError:
+            print("Invalid config file")
+            exit()
+        except KeyError:
+            print("Missing key in config file")
+            exit()
+        except FileNotFoundError:
+            print("Missing config file")
+            exit()
+
+    def __del__(self):
+        self.close()
