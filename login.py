@@ -1,5 +1,4 @@
 import sqlite3
-
 from user import User
 from getpass import getpass
 from sql_conn import SqlConn, Sqlite3Conn
