@@ -65,7 +65,7 @@ class Login:
                         print()
                         user = Login.login_user()
                 if user is not None:
-                    if user.is_active:
+                    if user.is_active and user.has_password:
                         user.logged_user_menu()
             else:
                 print("Login failed, try again later.")
@@ -116,15 +116,12 @@ class Login:
                                 password_check = True
                         if result_user[2]:
                             active_check = True
-                        # rethink this
                         if result_user[1] is None:
                             has_password = 0
                         else:
                             has_password = 1
-                        if (username_check and password_check or
-                            username_check and result_user[1] is None and not result_user[2] or
-                            username_check and password_check and not active_check or
-                            username_check and active_check and not has_password):
+                        # recheck this condition
+                        if username_check:
                             select_query = f"""SELECT Username, fullName, isAdmin, isActive, passwordHash FROM {db_table} WHERE Username = "{result_user[0]}";"""
                             if not User.use_sqlite3:
                                 result_user = SqlConn.sql_query_result(select_query)[0]
@@ -137,6 +134,7 @@ class Login:
                             return User(result_user[0], full_name=result_user[1], is_admin=result_user[2], is_active=result_user[3], has_password=has_password)
 
             print("Invalid login credentials.")
+            print()
             hold_clear = True
             tries += 1
 
