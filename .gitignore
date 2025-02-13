@@ -8,3 +8,4 @@ __pycache__/
 
 # ignore sqlite3 db files
 *_db
+*.sqlite*
