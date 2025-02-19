@@ -3,7 +3,7 @@ import sys
 import uuid
 import bcrypt
 from getpass import getpass
-from sql_conn import SqlConn, Sqlite3Conn, SqlDB
+from sql_conn import SqlDB
 from configparser import ConfigParser
 
 
