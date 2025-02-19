@@ -104,7 +104,7 @@ class SqlConn(mysql.connector.MySQLConnection):
 
 class Sqlite3Conn(sqlite3.Connection):
     def __init__(self, db_file):
-        super().__init__(db_file)
+        super().__init__(db_file + ".sqlite3")
 
     @staticmethod
     def sql_query(db_query, db_table, drop=False):
@@ -121,14 +121,14 @@ class Sqlite3Conn(sqlite3.Connection):
 
     @staticmethod
     def get_last_id(db_table):
-        last_id = Sqlite3Conn.sql_query_result(db_table, f"""SELECT MAX(ID) FROM {db_table};""")
+        last_id = Sqlite3Conn.sql_query_result(f"""SELECT MAX(ID) FROM {db_table};""", db_table)
         last_id = last_id[0][0]  # last_id is a list of tuples, so the value we want is at that index
         if last_id is None:
             last_id = 0
         return last_id
 
     @staticmethod
-    def sql_query_result(db_table, db_query, print_out=False):
+    def sql_query_result(db_query, db_table, print_out=False):
         conn = Sqlite3Conn.connect_db(db_table)
         cursor = conn.cursor()  # cursor
         try:
@@ -159,3 +159,33 @@ class Sqlite3Conn(sqlite3.Connection):
 
     def __del__(self):
         self.close()
+
+class SqlDB:
+    @staticmethod
+    def sql_query(db_query, db_table, drop=False, use_sqlite3=False):
+        if use_sqlite3:
+            Sqlite3Conn.sql_query(db_query, db_table, drop)
+        else:
+            SqlConn.sql_query(db_query, db_table, drop)
+
+    @staticmethod
+    def sql_query_result(db_query, db_table, print_out=False, use_sqlite3=False):
+        if use_sqlite3:
+            return Sqlite3Conn.sql_query_result(db_query, db_table, print_out)
+        else:
+            return SqlConn.sql_query_result(db_query, print_out)
+
+    @staticmethod
+    def get_last_id(db_table, use_sqlite3=False):
+        if use_sqlite3:
+            return Sqlite3Conn.get_last_id(db_table)
+        else:
+            return SqlConn.get_last_id(db_table)
+
+    @staticmethod
+    def connect_db(db_table=None, use_sqlite3=False):
+        if use_sqlite3:
+            return Sqlite3Conn.connect_db(db_table)
+        else:
+            return SqlConn.connect_db()
+
