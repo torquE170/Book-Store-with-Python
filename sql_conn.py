@@ -108,7 +108,7 @@ class Sqlite3Conn(sqlite3.Connection):
 
     @staticmethod
     def sql_query(db_query, db_table, drop=False):
-        conn = Sqlite3Conn.connect_db(db_table)
+        conn = Sqlite3Conn.connect_db()
         cursor = conn.cursor()
         if drop and db_table != "":
             cursor.execute(f"""
@@ -121,15 +121,15 @@ class Sqlite3Conn(sqlite3.Connection):
 
     @staticmethod
     def get_last_id(db_table):
-        last_id = Sqlite3Conn.sql_query_result(f"""SELECT MAX(ID) FROM {db_table};""", db_table)
+        last_id = Sqlite3Conn.sql_query_result(f"""SELECT MAX(ID) FROM {db_table};""")
         last_id = last_id[0][0]  # last_id is a list of tuples, so the value we want is at that index
         if last_id is None:
             last_id = 0
         return last_id
 
     @staticmethod
-    def sql_query_result(db_query, db_table, print_out=False):
-        conn = Sqlite3Conn.connect_db(db_table)
+    def sql_query_result(db_query, print_out=False):
+        conn = Sqlite3Conn.connect_db()
         cursor = conn.cursor()  # cursor
         try:
             cursor.execute(db_query)  # execute the query
@@ -143,9 +143,9 @@ class Sqlite3Conn(sqlite3.Connection):
         return rows
 
     @staticmethod
-    def connect_db(db_table):
+    def connect_db():
         try:
-            conn = Sqlite3Conn(db_table)
+            conn = Sqlite3Conn.set_config()
             return conn
         except ValueError:
             print("Invalid config file")
@@ -157,7 +157,35 @@ class Sqlite3Conn(sqlite3.Connection):
             print("Missing config file")
             exit()
 
-    def __del__(self):
+    @staticmethod
+    def set_config():
+        try:
+            db_connection = Sqlite3Conn.read_config("config.ini", "DB-CONNECTION")
+            conn = Sqlite3Conn(db_connection["database"])
+            return conn
+        except ValueError:
+            print("Invalid config file")
+            exit()
+        except KeyError:
+            print("Missing key in config file")
+            exit()
+        except FileNotFoundError:
+            print("Missing config file")
+            exit()
+
+    @staticmethod
+    def read_config(file_name, settings):
+        # read the file
+        config_object = ConfigParser()
+        if not os.path.exists(file_name):
+            raise FileNotFoundError
+        config_object.read(file_name)
+
+        # get config options
+        values = config_object[settings]
+        return values
+
+def __del__(self):
         self.close()
 
 class SqlDB:
@@ -169,9 +197,9 @@ class SqlDB:
             SqlConn.sql_query(db_query, db_table, drop)
 
     @staticmethod
-    def sql_query_result(db_query, db_table, print_out=False, use_sqlite3=False):
+    def sql_query_result(db_query, print_out=False, use_sqlite3=False):
         if use_sqlite3:
-            return Sqlite3Conn.sql_query_result(db_query, db_table, print_out)
+            return Sqlite3Conn.sql_query_result(db_query, print_out)
         else:
             return SqlConn.sql_query_result(db_query, print_out)
 
@@ -183,9 +211,9 @@ class SqlDB:
             return SqlConn.get_last_id(db_table)
 
     @staticmethod
-    def connect_db(db_table=None, use_sqlite3=False):
+    def connect_db(use_sqlite3=False):
         if use_sqlite3:
-            return Sqlite3Conn.connect_db(db_table)
+            return Sqlite3Conn.connect_db()
         else:
             return SqlConn.connect_db()
 
