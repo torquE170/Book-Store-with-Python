@@ -77,7 +77,7 @@ class User:
         list_query = f"""
         SELECT ID, Username, isAdmin, isActive FROM {db_table};
         """
-        user_list = SqlDB.sql_query_result(list_query, db_table, use_sqlite3=User.use_sqlite3)
+        user_list = SqlDB.sql_query_result(list_query, use_sqlite3=User.use_sqlite3)
         if User.at_cli:
             User.clear()
         print(f"{"ID":>3s}  {"Username":<15s} {"isAdmin":>7s}  {"isActive":>8s}")
@@ -119,7 +119,7 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -139,7 +139,7 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -188,7 +188,7 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -209,7 +209,7 @@ class User:
         select_query = f"""SELECT Username FROM {db_table}
         WHERE Username = "{self.username}"
         """
-        result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+        result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
         if len(result) == 0:
             print(f"User {self.username} has been deleted")
             print()
@@ -224,12 +224,12 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isAdmin, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     if result_user[1]:
                         select_query = f"""SELECT Username FROM {db_table} WHERE isAdmin = 1;"""
-                        result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+                        result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
                         if len(result) == 1:
                             print(f"Cannot delete last admin {result[0][0]}")
                             print()
@@ -349,7 +349,7 @@ class User:
         FROM {db_table} 
         WHERE Username = "{username}";
         """
-        result = SqlDB.sql_query_result(query, db_table, use_sqlite3=User.use_sqlite3)[0]
+        result = SqlDB.sql_query_result(query, use_sqlite3=User.use_sqlite3)[0]
         user = User(result[0], is_admin=result[1], is_active=result[2], has_password=1)
         return user
 
@@ -363,7 +363,7 @@ class User:
             username = input("Username: ")
             db_table = "Users_db"
             select_query = f"""SELECT Username FROM {db_table};"""
-            names = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+            names = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
             for name in names:
                 if username == name[0]:
                     print(f"Username {name[0]} already exists")
@@ -491,7 +491,7 @@ class User:
 
     @staticmethod
     def init_db(db_table, drop=False):
-        conn = SqlDB.connect_db(db_table, User.use_sqlite3)
+        conn = SqlDB.connect_db(User.use_sqlite3)
         cursor = conn.cursor()
         query_init = f'''
         CREATE TABLE {db_table} (

@@ -26,7 +26,7 @@ class Login:
                     print()
                     db_table = "Users_db"
                     select_query = f"""SELECT Username, isActive FROM {db_table};"""
-                    result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+                    result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
                     for result_user in result:
                         if username == result_user[0]:
                             valid = True
@@ -93,7 +93,7 @@ class Login:
             db_table = "Users_db"
             select_query = f"""SELECT Username, passwordHash, isActive FROM {db_table};"""
             try:
-                result = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)
+                result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
             except ProgrammingError:
                 User.init_db("Users_db", True)
                 result = None
@@ -116,7 +116,7 @@ class Login:
                         # recheck this condition
                         if username_check:
                             select_query = f"""SELECT Username, fullName, isAdmin, isActive, passwordHash FROM {db_table} WHERE Username = "{result_user[0]}";"""
-                            result_user = SqlDB.sql_query_result(select_query, db_table, use_sqlite3=User.use_sqlite3)[0]
+                            result_user = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)[0]
                             if result_user[4] is None:
                                 has_password = 0
                             else:
