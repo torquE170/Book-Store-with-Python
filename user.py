@@ -2,6 +2,7 @@ import os
 import sys
 import uuid
 import bcrypt
+import logging
 from getpass import getpass
 from sql_conn import SqlDB
 from configparser import ConfigParser
@@ -10,13 +11,18 @@ from configparser import ConfigParser
 class User:
     at_cli = 0  # toggle to 1 to use getpass when at cli for password entry
     use_sqlite3 = 0  # toggle to 1 to use a local sqlite3 file as a database
-    def __init__(self, username, full_name = None, is_admin = 0, is_active = 0, has_password = 0):
+    def __init__(self, username, full_name = None, is_admin = 0, is_active = 0, has_password = 0,
+                 request_logout = 0, request_exit = 0, correct_password = 0, password_tries = 0):
         self.session_id = uuid.uuid4()
         self.username = username
         self.full_name = full_name
         self.is_admin = is_admin
         self.is_active = is_active
         self.has_password = has_password
+        self.request_logout = request_logout
+        self.request_exit = request_exit
+        self.correct_password = correct_password
+        self.password_tries = password_tries
 
     @staticmethod
     def set_config():
@@ -429,7 +435,8 @@ class User:
             option = User.read_menu_option(">> ")
             print()
             if option == 1:
-                self.session_id = "request_logout"
+                # self.session_id = "request_logout"
+                self.request_logout = 1
                 print("Logged out")
                 print()
                 hold_clear = True
@@ -469,7 +476,8 @@ class User:
                 User.demote_user_by_name()
                 hold_clear = True
             elif option == 0:
-                self.session_id = "request_exit"
+                # self.session_id = "request_exit"
+                self.request_exit = 1
                 print("Good bye!")
                 print()
                 return self
@@ -489,6 +497,19 @@ class User:
             os.system("cls")
         elif "linux" in sys.platform:
             os.system("clear")
+
+    def log_to_file(self):
+        logging.basicConfig(filename="Users.log",
+                            filemode='a',
+                            format='%(asctime)s,%(msecs)03d %(name)s %(levelname)s %(message)s',
+                            datefmt='%Y-%m-%d %H:%M:%S',
+                            level=logging.INFO)
+
+        if self.request_logout or self.request_exit:
+            action = "out"
+        else:
+            action = "in"
+        logging.info(f'{self.username} logged {action} with session_id = {self.session_id}')
 
     @staticmethod
     def init_db(db_table, drop=False):
