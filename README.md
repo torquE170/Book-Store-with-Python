@@ -11,7 +11,9 @@ A ini config file, that:
 3) Sets getpass() as function for reading password when in terminal 
 and uses "clear" commands for windows and linux
 
+## A log text file
+1) A txt log file with login time, date and a unique session id so the app keeps a record
+
 ## Next steps
-1) Make a txt log file with login time, date and a unique session id so the app keeps a record
-2) Add ability for a user to add a database completely defined by him 
+1) Add ability for a user to add a database completely defined by him 
    1) Add the ability for a user to manipulate entries in that database
