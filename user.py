@@ -291,10 +291,10 @@ class User:
         salt = bcrypt.gensalt()
         password_hash = User.hashpw(password, salt)
         update_query = f"""UPDATE {db_table} 
-        SET passwordHash = "{password_hash}",
-        passwordSalt = "{salt.decode("utf-8")}"
+        SET passwordHash = "{password_hash}"
         WHERE Username = "{self.username}";
         """
+        # passwordSalt = "{salt.decode("utf-8")}"
         SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
         self.has_password = 1
         print("Password has been set")
@@ -338,10 +338,11 @@ class User:
         salt = bcrypt.gensalt()
         password_hash = User.hashpw(password, salt)
         update_query = f"""UPDATE {db_table} 
-            SET passwordHash = "{password_hash}",
-            passwordSalt = "{salt.decode("utf-8")}"
+            SET passwordHash = "{password_hash}"
+            
             WHERE Username = "{username}";
             """
+        # passwordSalt = "{salt.decode("utf-8")}"
         SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
         print("Password has been reset")
         print()
@@ -501,18 +502,20 @@ class User:
         isAdmin INT NOT NULL,
         isActive INT NOT NULL,
         passwordHash VARCHAR(128),
-        passwordSalt VARCHAR(128),
         PRIMARY KEY(ID)
         );
         '''
+        # passwordSalt VARCHAR(128),
         SqlDB.sql_query(query_init, db_table, drop, User.use_sqlite3)
         next_id = SqlDB.get_last_id(db_table, User.use_sqlite3) + 1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw("adminadmin", salt)
         query_admin = f'''
-        INSERT INTO {db_table} (ID, Username, isAdmin, isActive, passwordHash, passwordSalt)
-        VALUES ({next_id}, "admin",  1, 0, "{password_hash}", "{salt.decode("utf-8")}");
+        INSERT INTO {db_table} (ID, Username, isAdmin, isActive, passwordHash)
+        VALUES ({next_id}, "admin",  1, 0, "{password_hash}");
         '''
+        # , passwordSalt
+        # , "{salt.decode("utf-8")}"
         SqlDB.sql_query(query_admin, db_table, use_sqlite3=User.use_sqlite3)
 
     @staticmethod
