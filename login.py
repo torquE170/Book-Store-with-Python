@@ -46,9 +46,9 @@ class Login:
         exit_flag = False
         while not exit_flag:
             if user is not None:
-                if (not user.is_active and not user.has_password
-                    or not user.is_active and user.has_password and user.is_admin
-                    or user.is_active and not user.has_password):
+                if (not user.is_active and not user.has_password or
+                    not user.is_active and user.has_password and user.is_admin or
+                    user.is_active and not user.has_password):
                     user.user_setup()
                 elif user.session_id == "request_logout":
                     user = Login.login_user()
