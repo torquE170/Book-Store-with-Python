@@ -77,12 +77,12 @@ class Login:
                         user = Login.login_user()
                 if user is not None:
                     if user.is_active and user.has_password and user.correct_password:
-                        user.logged_user_menu()
+                        user = user.logged_user_menu()
                         # user.log_to_file()
                     elif user.is_active and user.has_password and not user.correct_password:
                         print("Wrong password")
                         print()
-                        user = Login.login_user(user.password_tries)
+                        user = Login.login_user(user.password_tries, True)
 
             else:
                 print("Login failed, try again later.")
@@ -92,8 +92,8 @@ class Login:
                     exit_flag = True
 
     @staticmethod
-    def login_user(starting_tries = 0):
-        hold_clear = False
+    def login_user(starting_tries = 0, starting_clear = False):
+        hold_clear = starting_clear
         tries = starting_tries
         while tries < 3:
             if User.at_cli and not hold_clear:
@@ -116,11 +116,9 @@ class Login:
             try:
                 result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
             except ProgrammingError:
-                User.init_db("Users_db", True)
-                result = None
+                result = User.init_db("Users_db", True)
             except sqlite3.OperationalError:
-                User.init_db("Users_db", True)
-                result = None
+                result = User.init_db("Users_db", True)
             if result is not None:
                 for result_user in result:
                     if username == result_user[0]:
@@ -129,6 +127,7 @@ class Login:
                             if User.checkhash(password, result_user[1]):
                                 password_check = True
                             else:
+                                hold_clear = True
                                 if result_user[1] is None:
                                     has_password = 0
                                 else:
