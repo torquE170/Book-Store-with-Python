@@ -4,6 +4,8 @@ import uuid
 import bcrypt
 import logging
 from getpass import getpass
+
+from db_table import DBTable
 from sql_conn import SqlDB
 from configparser import ConfigParser
 
@@ -319,6 +321,16 @@ class User:
         print(f"User {self.username} now has \"{self.full_name}\" as display name")
         print()
 
+    def details(self):
+        if User.at_cli:
+            User.clear()
+        print(f"User ", end="")
+        print(f"{self.username}" if self.full_name is None else f"{self.full_name}({self.username})")
+        print(f"Session ID: {self.session_id}")
+        print("Is active" if self.is_active else "Isn't active", end=" and ")
+        print("is admin" if self.is_admin else "isn't admin")
+        print()
+
     @staticmethod
     def reset_password(username):
         print(f"Reset password for {username}")
@@ -345,7 +357,6 @@ class User:
         password_hash = User.hashpw(password, salt)
         update_query = f"""UPDATE {db_table} 
             SET passwordHash = "{password_hash}"
-            
             WHERE Username = "{username}";
             """
         # passwordSalt = "{salt.decode("utf-8")}"
@@ -405,6 +416,13 @@ class User:
         user = User.register_form()
         return user
 
+    @staticmethod
+    def create_db():
+        new_db = DBTable.create_db()
+        SqlDB.sql_query(new_db.create_string, new_db.name, True, User.use_sqlite3)
+        print("new data base")
+        print()
+
     def logged_user_menu(self):
         hold_clear = False
         option = -1
@@ -418,18 +436,14 @@ class User:
             print("3 - Set full name")
             if self.is_admin:
                 print("4 - List users")
-            if self.is_admin:
                 print("5 - Register user")
-            if self.is_admin:
                 print("6 - Activate a user")
-            if self.is_admin:
                 print("7 - Deactivate a user")
-            if self.is_admin:
                 print("8 - Delete a user")
-            if self.is_admin:
                 print("9 - Promote a user")
-            if self.is_admin:
                 print("10 - Demote a admin")
+            else:
+                print("4 - Create database")
             print()
             print("0 - Exit")
             option = User.read_menu_option(">> ")
@@ -441,21 +455,18 @@ class User:
                 hold_clear = True
                 return self
             elif option == 2:
-                if User.at_cli:
-                    User.clear()
-                print(f"User ", end = "")
-                print(f"{self.username}" if self.full_name is None else f"{self.full_name}({self.username})")
-                print(f"Session ID: {self.session_id}")
-                print("Is active" if self.is_active else "Isn't active", end = " and ")
-                print("is admin" if self.is_admin else "isn't admin")
-                print()
+                self.details()
                 hold_clear = True
             elif option == 3:
                 self.set_full_name()
                 hold_clear = True
-            elif option == 4 and self.is_admin:
-                User.list_users()
-                hold_clear = True
+            elif option == 4:
+                if self.is_admin:
+                    User.list_users()
+                    hold_clear = True
+                else:
+                    User.create_db()
+                    hold_clear = True
             elif option == 5 and self.is_admin:
                 User.register_form(0)
                 hold_clear = True
