@@ -435,7 +435,6 @@ class User:
             option = User.read_menu_option(">> ")
             print()
             if option == 1:
-                # self.session_id = "request_logout"
                 self.request_logout = 1
                 print("Logged out")
                 print()
@@ -476,7 +475,6 @@ class User:
                 User.demote_user_by_name()
                 hold_clear = True
             elif option == 0:
-                # self.session_id = "request_exit"
                 self.request_exit = 1
                 print("Good bye!")
                 print()
@@ -538,6 +536,7 @@ class User:
         # , passwordSalt
         # , "{salt.decode("utf-8")}"
         SqlDB.sql_query(query_admin, db_table, use_sqlite3=User.use_sqlite3)
+        return None
 
     @staticmethod
     def hashpw(password, salt):
