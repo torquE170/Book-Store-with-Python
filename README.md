@@ -5,9 +5,9 @@
 1) Manage users(list, add, remove, promote, demote, user status - active/deactivated)
 
 ## Config file
-A ini config file, that: 
+An ini config file, that: 
 1) Sets connect data for a mysql server. 
-2) Config parameter to use a internal sqlite3 db file or use a mysql server
+2) Config parameter to use an internal sqlite3 db file or use a mysql server
 3) Sets getpass() as function for reading password when in terminal 
 and uses "clear" commands for windows and linux
 
