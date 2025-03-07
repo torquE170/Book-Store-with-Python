@@ -4,7 +4,6 @@ import uuid
 import bcrypt
 import logging
 from getpass import getpass
-
 from db_table import DBTable
 from sql_conn import SqlDB
 from configparser import ConfigParser

@@ -17,3 +17,15 @@ and uses "clear" commands for windows and linux
 ## Next steps
 1) Add ability for a user to add a database completely defined by him 
    1) Add the ability for a user to manipulate entries in that database
+
+### Technical information
+1) Used python packages:
+   - pip v25.0.1
+   - bcrypt v4.2.1 - for hashing and checking clear text password against hash
+   - mysql-connector-python v9.2.0 - for connecting to a standalone mysql server
+   - ConfigParser (default Python library) - for parsing a .ini file for some user set config options
+   - getpass (default Python library) - getpass() for terminal, shoulder surfing safe password entry
+   - uuid (default Python library) - for generating a unique session ID for each user once they log in
+   - sqlite3 (default Python library) - for using a .sqlite3 database file instead of a mysql server in case that requirement isn't met
+   - sys, os (default Python library) - for clearing the screen on windows and linux systems when running in terminal
+ 
