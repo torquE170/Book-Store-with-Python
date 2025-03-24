@@ -281,7 +281,7 @@ class User:
             password1 = "password1"
             password2 = "password2"
             while password1 != password2:
-                password1 = getpass("Password: ")
+                password1 = getpass()
                 password2 = getpass("Retype password: ")
                 if password1 != password2:
                     print("Passwords don't match, try again!")
@@ -394,7 +394,7 @@ class User:
         new_user = User.add_new_user(username)
         if active:
             new_user.set_password()
-            new_user.set_active(active)
+        new_user.set_active(active)
         return new_user
 
     @staticmethod
