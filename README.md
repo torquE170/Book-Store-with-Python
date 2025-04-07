@@ -29,7 +29,7 @@ and uses "clear" commands for windows and linux
    - sqlite3 (default Python library) - for using a .sqlite3 database file instead of a mysql server in case that requirement isn't met
    - sys, os (default Python library) - for clearing the screen on windows and linux systems when running in terminal
  
-### First time use instructions
+## First time use instructions
 - First time you start the program, it will generate a new database (mySQL/sqlite3 - user choice)
 - It will create a new admin user with admin privileges
 - First time you will have to log in with user: admin and password: adminadmin
