@@ -341,7 +341,9 @@ class User:
                 password1 = getpass()
                 password2 = getpass("Retype password: ")
                 if password1 != password2:
+                    print()
                     print("Passwords don't match, try again!")
+                    print()
             password = password1
         else:
             password1 = "password1"
@@ -350,7 +352,9 @@ class User:
                 password1 = input("Password: ")
                 password2 = input("Retype password: ")
                 if password1 != password2:
+                    print()
                     print("Passwords don't match, try again!")
+                    print()
             password = password1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw(password, salt)
@@ -360,6 +364,7 @@ class User:
             """
         # passwordSalt = "{salt.decode("utf-8")}"
         SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
+        print()
         print("Password has been reset")
         print()
         query = f"""SELECT Username, isAdmin, isActive 
@@ -367,7 +372,7 @@ class User:
         WHERE Username = "{username}";
         """
         result = SqlDB.sql_query_result(query, use_sqlite3=User.use_sqlite3)[0]
-        user = User(result[0], is_admin=result[1], is_active=result[2], has_password=1)
+        user = User(result[0], is_admin=result[1], is_active=result[2], has_password=1, correct_password=1)
         return user
 
     @staticmethod
