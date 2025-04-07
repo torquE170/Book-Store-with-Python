@@ -366,7 +366,8 @@ class User:
         SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
         print()
         print("Password has been reset")
-        print()
+        User.wait_for_enter()
+
         query = f"""SELECT Username, isAdmin, isActive 
         FROM {db_table} 
         WHERE Username = "{username}";
@@ -552,6 +553,12 @@ class User:
         # , "{salt.decode("utf-8")}"
         SqlDB.sql_query(query_admin, db_table, use_sqlite3=User.use_sqlite3)
         return None
+
+    @staticmethod
+    def wait_for_enter():
+        print()
+        input("Press enter to continue...")
+        print()
 
     @staticmethod
     def hashpw(password, salt):
