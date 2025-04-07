@@ -285,6 +285,7 @@ class User:
                 password2 = getpass("Retype password: ")
                 if password1 != password2:
                     print("Passwords don't match, try again!")
+                    print()
             password = password1
         else:
             password1 = "password1"
@@ -294,6 +295,7 @@ class User:
                 password2 = input("Retype password: ")
                 if password1 != password2:
                     print("Passwords don't match, try again!")
+                    print()
             password = password1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw(password, salt)
@@ -304,7 +306,9 @@ class User:
         # passwordSalt = "{salt.decode("utf-8")}"
         SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
         self.has_password = 1
+        self.correct_password = 1
         print("Password has been set")
+        User.wait_for_enter()
         print()
 
     def set_full_name(self):
