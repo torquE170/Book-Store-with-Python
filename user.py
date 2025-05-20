@@ -4,7 +4,6 @@ import uuid
 import bcrypt
 import logging
 from getpass import getpass
-from db_table import DBTable
 from sql_conn import SqlDB
 from configparser import ConfigParser
 
@@ -425,13 +424,7 @@ class User:
         user = User.register_form()
         return user
 
-    @staticmethod
-    def create_db():
-        new_db = DBTable.create_db()
-        SqlDB.sql_query(new_db.create_string, new_db.name, True, User.use_sqlite3)
-        print("new data base")
-        print()
-
+    # noinspection PyInconsistentReturns
     def logged_user_menu(self):
         hold_clear = False
         option = -1
@@ -452,7 +445,7 @@ class User:
                 print("9 - Promote a user")
                 print("10 - Demote a admin")
             else:
-                print("4 - Create database")
+                print("4 - List all books")
             print()
             print("0 - Exit")
             option = User.read_menu_option(">> ")
@@ -474,7 +467,9 @@ class User:
                     User.list_users()
                     hold_clear = True
                 else:
-                    User.create_db()
+                    # list all books
+
+                    print()
                     hold_clear = True
             elif option == 5 and self.is_admin:
                 User.register_form(0)
@@ -530,7 +525,7 @@ class User:
         logging.info(f'{self.username} logged {action} with session_id = {self.session_id}')
 
     @staticmethod
-    def init_db(db_table, drop=False):
+    def init_db(db_table, drop = False):
         conn = SqlDB.connect_db(User.use_sqlite3)
         cursor = conn.cursor()
         query_init = f'''

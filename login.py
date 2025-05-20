@@ -6,6 +6,8 @@ from mysql.connector import ProgrammingError
 
 
 class Login:
+
+    # noinspection PyInconsistentReturns
     @staticmethod
     def failed_login_menu():
         option = -1
@@ -91,6 +93,7 @@ class Login:
                 if user is None:
                     exit_flag = True
 
+    # noinspection PyInconsistentReturns
     @staticmethod
     def login_user(starting_tries = 0, starting_clear = False):
         hold_clear = starting_clear

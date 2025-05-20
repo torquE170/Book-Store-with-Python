@@ -1,8 +1,12 @@
 # EJ-ITFactory-Python-Project
 
-###### A CLI experience with login and user management for keeping records of user defined items.
-### As a logged in administrator you can:
+###### A CLI experience with login and user management for keeping records avaiable and lent books to clients
+### As a logged-in administrator you can:
 1) Manage users(list, add, remove, promote, demote, user status - active/deactivated)
+### As a logged-in user you can:
+1) Manage available books(add, remove, edit)
+2) Lend books to clients
+3) Receive returned books from clients
 
 ## Config file
 An ini config file, that: 
@@ -15,8 +19,9 @@ and uses "clear" commands for windows and linux
 1) A txt log file with login time, date and a unique session id so the app keeps a record
 
 ## Next steps
-1) Add ability for a user to add a database completely defined by him 
-   - Add the ability for a user to manipulate entries in that database
+1) Create 2 additional tables for: 
+   - keeping a record of available and lent books
+   - keeping a record of each lent book correlated with a client identifier and name
 
 ### Technical information
 1) Used python packages:
@@ -32,5 +37,5 @@ and uses "clear" commands for windows and linux
 ## First time use instructions
 - First time you start the program, it will generate a new database (mySQL/sqlite3 - user choice)
 - It will create a new admin user with admin privileges
-- First time you will have to log in with user: admin and password: adminadmin
+- You will have to log in with user: admin and password: adminadmin
 - You will be prompted to change them both
