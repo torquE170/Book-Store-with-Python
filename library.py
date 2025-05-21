@@ -41,6 +41,13 @@ class LibraryEntry:
         typed_out += f"Quantity = {self.quantity}, Available = {self.available}"
         return typed_out
 
+    @staticmethod
+    def get_entry():
+        new_book = Book.get_book()
+        quantity = int(input("Quantity: "))
+        new_entry = LibraryEntry(new_book, quantity)
+        return new_entry
+
 class BookStore:
 
     db_table = "BookStore"
@@ -60,7 +67,7 @@ class BookStore:
             typed_out += "-" * 60 + "\n"
         return typed_out
 
-    def add_entry(self, new_entry):
+    def save_entry(self, new_entry):
         next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
         # self.entries.append(BookStoreEntry(new_entry, next_id))
         this_entry = BookStoreEntry(new_entry, next_id)
@@ -68,7 +75,20 @@ class BookStore:
             saved_entry = this_entry.save_to_db()
             self.entries.append(saved_entry)
         except IntegrityError:
-            print(f"Didn't add book! {this_entry.entry.book.name} is already in store")
+            print(f"Book not added! \"{this_entry.entry.book.name}\" is already in store")
+            print()
+
+    @staticmethod
+    def add_entry():
+        if UserSettings.at_cli:
+            UserSettings.clear()
+        print(f" Add book ".center(60, "-"))
+        new_entry = BookStoreEntry.get_entry()
+        try:
+            new_entry.save_to_db()
+        except IntegrityError:
+            print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
+            print()
 
     @staticmethod
     def list_entries(table = db_table):
@@ -84,9 +104,47 @@ class BookStore:
         print(book_store)  # or return it
 
     @staticmethod
+    def search_book(table = db_table):
+        if UserSettings.at_cli:
+            UserSettings.clear()
+
+        search_by = ""
+        opt = -1
+        while opt != 0:
+            print("Search books by:")
+            print("1 - Name")
+            print("2 - Author")
+            print()
+            print("0 - Cancel")
+            opt = UserSettings.read_menu_option(">> ")
+            print()
+            if opt == 1:
+                search_by = "Name"
+                break
+            if opt == 2:
+                search_by = "Author"
+                break
+            if opt == 0:
+                print("Search canceled")
+                return
+        if UserSettings.at_cli:
+            UserSettings.clear()
+        keyword = input(f"Search books by {search_by}: ")
+
+        queried_books = BookStore()
+        search_query = f"""
+        SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE {search_by} LIKE "%{keyword}%";
+        """
+        result_list = SqlDB.sql_query_result(search_query, use_sqlite3=UserSettings.use_sqlite3)
+        for entry in result_list:
+            queried_books.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
+        if len(queried_books.entries):
+            print(queried_books)  # or return it
+        else:
+            print("No results\n")
+
+    @staticmethod
     def init_db(db_table, drop = False):
-        conn = SqlDB.connect_db(UserSettings.use_sqlite3)
-        cursor = conn.cursor()
         query_init = f'''
             CREATE TABLE {db_table} (
             ID INT NOT NULL,
@@ -112,12 +170,19 @@ class BookStoreEntry:
         typed_out += f"{self.entry}"
         return typed_out
 
+    @staticmethod
+    def get_entry():
+        new_lib_entry = LibraryEntry.get_entry()
+        next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
+        book_store_entry = BookStoreEntry(new_lib_entry, next_id)
+        return book_store_entry
+
     def save_to_db(self):
         insert_query = f"""
         INSERT INTO {BookStore.db_table} (ID, Name, Author, Quantity, Available)
         VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
         """
         SqlDB.sql_query(insert_query, BookStore.db_table, use_sqlite3=UserSettings.use_sqlite3)
-        print(f"Added book! {self.entry.book.name} has been saved to database")
+        print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
         print()
         return self

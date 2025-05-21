@@ -2,8 +2,7 @@ import os
 import sqlite3
 import mysql.connector
 from configparser import ConfigParser
-from mysql.connector import Error, ProgrammingError
-from mysql.connector.errors import OperationalError
+from mysql.connector import Error, ProgrammingError, OperationalError
 
 
 class SqlConn(mysql.connector.MySQLConnection):

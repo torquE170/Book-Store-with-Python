@@ -405,7 +405,7 @@ class User:
                 hold_clear = False
             print("1 - Log out")
             print("2 - User details")
-            print("3 - Set full name")
+            print("3 - Set full user name")
             if self.is_admin:
                 print("4 - List users")
                 print("5 - Register user")
@@ -416,9 +416,11 @@ class User:
                 print("10 - Demote a admin")
             else:
                 print("4 - List all books")
+                print("5 - Search books")
+                print("6 - Add book")
             print()
             print("0 - Exit")
-            option = User.read_menu_option(">> ")
+            option = UserSettings.read_menu_option(">> ")
             print()
             if option == 1:
                 self.request_logout = 1
@@ -439,12 +441,21 @@ class User:
                 else:
                     BookStore.list_entries()
                     hold_clear = True
-            elif option == 5 and self.is_admin:
-                User.register_form(0)
-                hold_clear = True
-            elif option == 6 and self.is_admin:
-                User.set_active_by_user(1)
-                hold_clear = True
+            elif option == 5:
+                if self.is_admin:
+                    User.register_form(0)
+                    hold_clear = True
+                else:
+                    BookStore.search_book()
+                    hold_clear = True
+            elif option == 6:
+                if self.is_admin:
+                    User.set_active_by_user(1)
+                    hold_clear = True
+                else:
+                    BookStore.add_entry()
+                    hold_clear = True
+
             elif option == 7 and self.is_admin:
                 User.set_active_by_user(0)
                 hold_clear = True
@@ -463,14 +474,14 @@ class User:
                 print()
                 return self
 
-    @staticmethod
-    def read_menu_option(prompt):
-        while True:
-            try:
-                number = int(input(prompt))
-                return number
-            except ValueError:
-                return -1
+    # @staticmethod
+    # def read_menu_option(prompt):
+    #     while True:
+    #         try:
+    #             number = int(input(prompt))
+    #             return number
+    #         except ValueError:
+    #             return -1
 
     def log_to_file(self):
         logging.basicConfig(filename="Users.log",
@@ -487,8 +498,6 @@ class User:
 
     @staticmethod
     def init_db(db_table, drop = False):
-        conn = SqlDB.connect_db(UserSettings.use_sqlite3)
-        cursor = conn.cursor()
         query_init = f'''
         CREATE TABLE {db_table} (
         ID INT NOT NULL,

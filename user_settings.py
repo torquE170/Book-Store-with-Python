@@ -37,6 +37,15 @@ class UserSettings:
         return values
 
     @staticmethod
+    def read_menu_option(prompt):
+        while True:
+            try:
+                number = int(input(prompt))
+                return number
+            except ValueError:
+                return -1
+
+    @staticmethod
     def clear():
         if "win" in sys.platform:
             os.system("cls")
