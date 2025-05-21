@@ -1,11 +1,7 @@
-import random
-
-import bcrypt
-from mysql.connector import IntegrityError
-
 from book import Book
 from sql_conn import SqlDB
-from user import User
+from user_settings import UserSettings
+from mysql.connector import IntegrityError
 
 
 class Library:
@@ -55,7 +51,8 @@ class BookStore:
 
     def __repr__(self):
         if len(self.entries):
-            typed_out = "-" * 60 + "\n"
+            typed_out = f" {self.db_table} ".center(60, "-")
+            typed_out += "\n"
         else:
             typed_out = ""
         for entry in self.entries:
@@ -64,29 +61,31 @@ class BookStore:
         return typed_out
 
     def add_entry(self, new_entry):
-        next_id = SqlDB.get_last_id(BookStore.db_table, User.use_sqlite3) + 1
+        next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
         # self.entries.append(BookStoreEntry(new_entry, next_id))
         this_entry = BookStoreEntry(new_entry, next_id)
         try:
             saved_entry = this_entry.save_to_db()
             self.entries.append(saved_entry)
         except IntegrityError:
-            print(f"Book {this_entry.entry.book.name} already in store")
+            print(f"Didn't add book! {this_entry.entry.book.name} is already in store")
 
     @staticmethod
-    def list_entries():
+    def list_entries(table = db_table):
+        if UserSettings.at_cli:
+            UserSettings.clear()
         book_store = BookStore()
         list_query = f"""
-        SELECT ID, Name, Author, Quantity, Available FROM {BookStore.db_table};
+        SELECT ID, Name, Author, Quantity, Available FROM {table};
         """
-        books_list = SqlDB.sql_query_result(list_query, use_sqlite3=User.use_sqlite3)
+        books_list = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
         for entry in books_list:
             book_store.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
         print(book_store)  # or return it
 
     @staticmethod
     def init_db(db_table, drop = False):
-        conn = SqlDB.connect_db(User.use_sqlite3)
+        conn = SqlDB.connect_db(UserSettings.use_sqlite3)
         cursor = conn.cursor()
         query_init = f'''
             CREATE TABLE {db_table} (
@@ -100,7 +99,7 @@ class BookStore:
             PRIMARY KEY(ID)
         );
         '''
-        SqlDB.sql_query(query_init, db_table, drop, User.use_sqlite3)
+        SqlDB.sql_query(query_init, db_table, drop, UserSettings.use_sqlite3)
 
 class BookStoreEntry:
 
@@ -118,7 +117,7 @@ class BookStoreEntry:
         INSERT INTO {BookStore.db_table} (ID, Name, Author, Quantity, Available)
         VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
         """
-        SqlDB.sql_query(insert_query, BookStore.db_table, use_sqlite3=User.use_sqlite3)
-        print(f"Book {self.entry.book.name} has been saved to database")
+        SqlDB.sql_query(insert_query, BookStore.db_table, use_sqlite3=UserSettings.use_sqlite3)
+        print(f"Added book! {self.entry.book.name} has been saved to database")
         print()
         return self
