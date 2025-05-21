@@ -1,16 +1,14 @@
-import os
-import sys
 import uuid
 import bcrypt
 import logging
-from getpass import getpass
 from sql_conn import SqlDB
-from configparser import ConfigParser
+from getpass import getpass
+from library import BookStore
+from user_settings import UserSettings
 
 
 class User:
-    at_cli = 0  # toggle to 1 to use getpass when at cli for password entry
-    use_sqlite3 = 0  # toggle to 1 to use a local sqlite3 file as a database
+
     def __init__(self, username, full_name = None, is_admin = 0, is_active = 0, has_password = 0,
                  request_logout = 0, request_exit = 0, correct_password = 0, password_tries = 0):
         self.session_id = uuid.uuid4()
@@ -23,34 +21,6 @@ class User:
         self.request_exit = request_exit
         self.correct_password = correct_password
         self.password_tries = password_tries
-
-    @staticmethod
-    def set_config():
-        try:
-            user_settings = User.read_config("config.ini", "USER-SETTINGS")
-            User.at_cli = int(user_settings["at_cli"])
-            User.use_sqlite3 = int(user_settings["use_sqlite3"])
-        except ValueError:
-            print("Invalid config file")
-            exit()
-        except KeyError:
-            print("Missing key in config file")
-            exit()
-        except FileNotFoundError:
-            print("Missing config file")
-            exit()
-
-    @staticmethod
-    def read_config(file_name, settings):
-        # read the file
-        config_object = ConfigParser()
-        if not os.path.exists(file_name):
-            raise FileNotFoundError
-        config_object.read(file_name)
-
-        # get config options
-        values = config_object[settings]
-        return values
 
     def user_setup(self):
         if not self.is_active:
@@ -83,9 +53,9 @@ class User:
         list_query = f"""
         SELECT ID, Username, isAdmin, isActive FROM {db_table};
         """
-        user_list = SqlDB.sql_query_result(list_query, use_sqlite3=User.use_sqlite3)
-        if User.at_cli:
-            User.clear()
+        user_list = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
+        if UserSettings.at_cli:
+            UserSettings.clear()
         print(f"{"ID":>3s}  {"Username":<15s} {"isAdmin":>7s}  {"isActive":>8s}")
         for user in user_list:
             print(f"{user[0]:>3}  {user[1]:<15s} {user[2]:>7}  {user[3]:>8}")
@@ -103,7 +73,7 @@ class User:
         SET isAdmin = {state}
         WHERE Username = "{self.username}";
         """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         if self.is_admin:
             been_admin = True
         else:
@@ -125,7 +95,7 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -145,7 +115,7 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -167,7 +137,7 @@ class User:
                 SET isActive = {state}
                 WHERE Username = "{self.username}";
                 """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         if self.is_active:
             been_active = True
         else:
@@ -194,7 +164,7 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     valid = True
@@ -211,11 +181,11 @@ class User:
         delete_query = f"""DELETE FROM {db_table}
         WHERE Username = "{self.username}";
         """
-        SqlDB.sql_query(delete_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(delete_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         select_query = f"""SELECT Username FROM {db_table}
         WHERE Username = "{self.username}"
         """
-        result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
         if len(result) == 0:
             print(f"User {self.username} has been deleted")
             print()
@@ -230,12 +200,12 @@ class User:
             print()
             db_table = "Users_db"
             select_query = f"""SELECT Username, isAdmin, isActive FROM {db_table};"""
-            result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     if result_user[1]:
                         select_query = f"""SELECT Username FROM {db_table} WHERE isAdmin = 1;"""
-                        result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+                        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
                         if len(result) == 1:
                             print(f"Cannot delete last admin {result[0][0]}")
                             print()
@@ -271,12 +241,12 @@ class User:
         SET Username = "{username}"
         WHERE Username = "{self.username}";
         """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         self.username = username
 
     def set_password(self):
         db_table = "Users_db"
-        if User.at_cli:
+        if UserSettings.at_cli:
             password1 = "password1"
             password2 = "password2"
             while password1 != password2:
@@ -303,7 +273,7 @@ class User:
         WHERE Username = "{self.username}";
         """
         # passwordSalt = "{salt.decode("utf-8")}"
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         self.has_password = 1
         self.correct_password = 1
         print("Password has been set")
@@ -318,14 +288,14 @@ class User:
                 SET fullName = "{full_name}"
                 WHERE Username = "{self.username}";
                 """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         self.full_name = full_name
         print(f"User {self.username} now has \"{self.full_name}\" as display name")
         print()
 
     def details(self):
-        if User.at_cli:
-            User.clear()
+        if UserSettings.at_cli:
+            UserSettings.clear()
         print(f"User ", end="")
         print(f"{self.username}" if self.full_name is None else f"{self.full_name}({self.username})")
         print(f"Session ID: {self.session_id}")
@@ -337,7 +307,7 @@ class User:
     def reset_password(username):
         print(f"Reset password for {username}")
         db_table = "Users_db"
-        if User.at_cli:
+        if UserSettings.at_cli:
             password1 = "password1"
             password2 = "password2"
             while password1 != password2:
@@ -366,7 +336,7 @@ class User:
             WHERE Username = "{username}";
             """
         # passwordSalt = "{salt.decode("utf-8")}"
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         print()
         print("Password has been reset")
         User.wait_for_enter()
@@ -375,13 +345,13 @@ class User:
         FROM {db_table} 
         WHERE Username = "{username}";
         """
-        result = SqlDB.sql_query_result(query, use_sqlite3=User.use_sqlite3)[0]
+        result = SqlDB.sql_query_result(query, use_sqlite3=UserSettings.use_sqlite3)[0]
         user = User(result[0], is_admin=result[1], is_active=result[2], has_password=1, correct_password=1)
         return user
 
     @staticmethod
     def register_form(active = 1):
-        if User.at_cli:
+        if UserSettings.at_cli:
             User.clear()
         print("Register a user")
         valid = False
@@ -389,7 +359,7 @@ class User:
             username = input("Username: ")
             db_table = "Users_db"
             select_query = f"""SELECT Username FROM {db_table};"""
-            names = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+            names = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for name in names:
                 if username == name[0]:
                     print(f"Username {name[0]} already exists")
@@ -409,12 +379,12 @@ class User:
     @staticmethod
     def add_new_user(username):
         db_table = "Users_db"
-        next_id = SqlDB.get_last_id(db_table, User.use_sqlite3) + 1
+        next_id = SqlDB.get_last_id(db_table, UserSettings.use_sqlite3) + 1
         insert_query = f"""
         INSERT INTO {db_table} (ID, Username, isAdmin, isActive)
         VALUES ({next_id}, "{username}",  0, 0);
         """
-        SqlDB.sql_query(insert_query, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(insert_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
         print(f"User {username} has been registered and needs activation")
         print()
         return User(username, is_admin=0, is_active=0)
@@ -429,8 +399,8 @@ class User:
         hold_clear = False
         option = -1
         while option != 0 or option != 1:
-            if User.at_cli and not hold_clear:
-                User.clear()
+            if UserSettings.at_cli and not hold_clear:
+                UserSettings.clear()
             else:
                 hold_clear = False
             print("1 - Log out")
@@ -467,9 +437,7 @@ class User:
                     User.list_users()
                     hold_clear = True
                 else:
-                    # list all books
-
-                    print()
+                    BookStore.list_entries()
                     hold_clear = True
             elif option == 5 and self.is_admin:
                 User.register_form(0)
@@ -504,13 +472,6 @@ class User:
             except ValueError:
                 return -1
 
-    @staticmethod
-    def clear():
-        if "win" in sys.platform:
-            os.system("cls")
-        elif "linux" in sys.platform:
-            os.system("clear")
-
     def log_to_file(self):
         logging.basicConfig(filename="Users.log",
                             filemode='a',
@@ -526,7 +487,7 @@ class User:
 
     @staticmethod
     def init_db(db_table, drop = False):
-        conn = SqlDB.connect_db(User.use_sqlite3)
+        conn = SqlDB.connect_db(UserSettings.use_sqlite3)
         cursor = conn.cursor()
         query_init = f'''
         CREATE TABLE {db_table} (
@@ -539,18 +500,15 @@ class User:
         PRIMARY KEY(ID)
         );
         '''
-        # passwordSalt VARCHAR(128),
-        SqlDB.sql_query(query_init, db_table, drop, User.use_sqlite3)
-        next_id = SqlDB.get_last_id(db_table, User.use_sqlite3) + 1
+        SqlDB.sql_query(query_init, db_table, drop, UserSettings.use_sqlite3)
+        next_id = SqlDB.get_last_id(db_table, UserSettings.use_sqlite3) + 1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw("adminadmin", salt)
         query_admin = f'''
         INSERT INTO {db_table} (ID, Username, isAdmin, isActive, passwordHash)
         VALUES ({next_id}, "admin",  1, 0, "{password_hash}");
         '''
-        # , passwordSalt
-        # , "{salt.decode("utf-8")}"
-        SqlDB.sql_query(query_admin, db_table, use_sqlite3=User.use_sqlite3)
+        SqlDB.sql_query(query_admin, db_table, use_sqlite3=UserSettings.use_sqlite3)
         return None
 
     @staticmethod
