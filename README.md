@@ -20,8 +20,8 @@ and uses "clear" commands for windows and linux
 
 ## Next steps
 1) Create 2 additional tables for: 
-   - keeping a record of available and lent books
-   - keeping a record of each lent book correlated with a client identifier and name
+   - keeping a record of available books
+   - keeping a record of lent books
 
 ### Technical information
 1) Used python packages:
