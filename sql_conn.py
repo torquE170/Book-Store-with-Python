@@ -29,14 +29,6 @@ class SqlConn(mysql.connector.MySQLConnection):
         # conn.close()  # close the connection
 
     @staticmethod
-    def get_last_id(db_table):
-        last_id = SqlConn.sql_query_result(f"""SELECT MAX(ID) FROM {db_table};""")
-        last_id = last_id[0][0]  # last_id is a list of tuples, so the value we want is at that index
-        if last_id is None:
-            last_id = 0
-        return last_id
-
-    @staticmethod
     def sql_query_result(db_query, print_out=False):
         conn = SqlConn.connect_db()
         cursor = conn.cursor()  # cursor
@@ -50,6 +42,14 @@ class SqlConn(mysql.connector.MySQLConnection):
                 print(row)
         # conn.close()  # close the connection
         return rows
+
+    @staticmethod
+    def get_last_id(db_table):
+        last_id = SqlConn.sql_query_result(f"""SELECT MAX(ID) FROM {db_table};""")
+        last_id = last_id[0][0]  # last_id is a list of tuples, so the value we want is at that index
+        if last_id is None:
+            last_id = 0
+        return last_id
 
     @staticmethod
     def connect_db():

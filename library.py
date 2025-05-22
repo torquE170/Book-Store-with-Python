@@ -1,7 +1,7 @@
 from book import Book
 from sql_conn import SqlDB
 from user_settings import UserSettings
-from mysql.connector import IntegrityError
+from mysql.connector import IntegrityError, ProgrammingError
 
 
 class Library:
@@ -67,6 +67,7 @@ class BookStore:
             typed_out += "-" * 60 + "\n"
         return typed_out
 
+
     def save_entry(self, new_entry):
         next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
         # self.entries.append(BookStoreEntry(new_entry, next_id))
@@ -80,12 +81,32 @@ class BookStore:
 
     @staticmethod
     def add_entry():
+        """Use for entering a book from keyboard and saving it to database"""
         if UserSettings.at_cli:
             UserSettings.clear()
         print(f" Add book ".center(60, "-"))
         new_entry = BookStoreEntry.get_entry()
         try:
+            new_entry.db_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
             new_entry.save_to_db()
+        except ProgrammingError:
+            print(f"Table {BookStore.db_table} not available")
+            print()
+            try:
+                BookStore.init_db(BookStore.db_table)
+                print(f"Created new table {BookStore.db_table}")
+                print()
+                new_entry.db_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
+                new_entry.save_to_db()
+            except ProgrammingError:
+                print(f"Tried to make new {BookStore.db_table}, and failed")
+                print("Exiting")
+                print()
+                return
+            except IntegrityError:
+                print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
+                print()
+            return
         except IntegrityError:
             print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
             print()
@@ -98,7 +119,12 @@ class BookStore:
         list_query = f"""
         SELECT ID, Name, Author, Quantity, Available FROM {table};
         """
-        books_list = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
+        try:
+            books_list = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
+        except ProgrammingError:
+            print(f"Table {table} not available")
+            print()
+            return
         for entry in books_list:
             book_store.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
         print(book_store)  # or return it
@@ -135,13 +161,67 @@ class BookStore:
         search_query = f"""
         SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE {search_by} LIKE "%{keyword}%";
         """
-        result_list = SqlDB.sql_query_result(search_query, use_sqlite3=UserSettings.use_sqlite3)
+        try:
+            result_list = SqlDB.sql_query_result(search_query, use_sqlite3=UserSettings.use_sqlite3)
+        except ProgrammingError:
+            print(f"Table {table} not available")
+            print()
+            return
         for entry in result_list:
             queried_books.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
         if len(queried_books.entries):
             print(queried_books)  # or return it
         else:
             print("No results\n")
+
+    @staticmethod
+    def delete_book(table = db_table):
+        if UserSettings.at_cli:
+            UserSettings.clear()
+
+        delete_by = ""
+        opt = -1
+        while opt != 0:
+            print("Delete book by:")
+            print("1 - ID")
+            print("2 - Name")
+            print()
+            print("0 - Cancel")
+            opt = UserSettings.read_menu_option(">> ")
+            print()
+            if opt == 1:
+                delete_by = "ID"
+                break
+            if opt == 2:
+                delete_by = "Name"
+                break
+            if opt == 0:
+                print("Delete operation canceled")
+                return
+        if UserSettings.at_cli:
+            UserSettings.clear()
+
+        value = ""
+        if delete_by == "ID":
+            value = int(input("ID: "))
+        if delete_by == "Name":
+            value = input("Name: ")
+            value = f"\"{value}\""
+
+        delete_statement = f"""
+        DELETE FROM {table} WHERE {delete_by}={value};
+        """
+        SqlDB.sql_query(delete_statement, table, use_sqlite3=UserSettings.use_sqlite3)
+        print()
+        select_query = f"""
+        SELECT ID, Name FROM {table}
+        WHERE {delete_by} = {value};
+        """
+        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+        if len(result) == 0:
+            print(f"Book with {delete_by}: {value} has been deleted")
+            print()
+
 
     @staticmethod
     def init_db(db_table, drop = False):
@@ -173,16 +253,16 @@ class BookStoreEntry:
     @staticmethod
     def get_entry():
         new_lib_entry = LibraryEntry.get_entry()
-        next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
-        book_store_entry = BookStoreEntry(new_lib_entry, next_id)
+        # next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
+        book_store_entry = BookStoreEntry(new_lib_entry)
         return book_store_entry
 
-    def save_to_db(self):
+    def save_to_db(self, table = BookStore.db_table):
         insert_query = f"""
-        INSERT INTO {BookStore.db_table} (ID, Name, Author, Quantity, Available)
+        INSERT INTO {table} (ID, Name, Author, Quantity, Available)
         VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
         """
-        SqlDB.sql_query(insert_query, BookStore.db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
         print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
         print()
         return self

@@ -394,7 +394,6 @@ class User:
         user = User.register_form()
         return user
 
-    # noinspection PyInconsistentReturns
     def logged_user_menu(self):
         hold_clear = False
         option = -1
@@ -418,6 +417,7 @@ class User:
                 print("4 - List all books")
                 print("5 - Search books")
                 print("6 - Add book")
+                print("7 - Remove book")
             print()
             print("0 - Exit")
             option = UserSettings.read_menu_option(">> ")
@@ -456,9 +456,13 @@ class User:
                     BookStore.add_entry()
                     hold_clear = True
 
-            elif option == 7 and self.is_admin:
-                User.set_active_by_user(0)
-                hold_clear = True
+            elif option == 7:
+                if self.is_admin:
+                    User.set_active_by_user(0)
+                    hold_clear = True
+                else:
+                    BookStore.delete_book()
+                    hold_clear = True
             elif option == 8 and self.is_admin:
                 User.delete_user_by_name()
                 hold_clear = True
@@ -473,15 +477,7 @@ class User:
                 print("Good bye!")
                 print()
                 return self
-
-    # @staticmethod
-    # def read_menu_option(prompt):
-    #     while True:
-    #         try:
-    #             number = int(input(prompt))
-    #             return number
-    #         except ValueError:
-    #             return -1
+        return None
 
     def log_to_file(self):
         logging.basicConfig(filename="Users.log",

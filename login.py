@@ -95,7 +95,6 @@ class Login:
                 if user is None:
                     exit_flag = True
 
-    # noinspection PyInconsistentReturns
     @staticmethod
     def login_user(starting_tries = 0, starting_clear = False):
         hold_clear = starting_clear
@@ -161,6 +160,7 @@ class Login:
             print()
             hold_clear = True
             tries += 1
+        return None
 
 
 UserSettings.set_config()
