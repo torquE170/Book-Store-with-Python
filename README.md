@@ -1,6 +1,6 @@
 # EJ-ITFactory-Python-Project
 
-###### A CLI experience with login and user management for keeping records avaiable and lent books to clients
+###### A CLI experience with login and user management for keeping records of available and lent books to clients
 ### As a logged-in administrator you can:
 1) Manage users(list, add, remove, promote, demote, user status - active/deactivated)
 ### As a logged-in user you can:
