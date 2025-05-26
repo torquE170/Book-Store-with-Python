@@ -352,7 +352,7 @@ class User:
     @staticmethod
     def register_form(active = 1):
         if UserSettings.at_cli:
-            User.clear()
+            UserSettings.clear()
         print("Register a user")
         valid = False
         while not valid:
@@ -414,10 +414,11 @@ class User:
                 print("9 - Promote a user")
                 print("10 - Demote a admin")
             else:
-                print("4 - List all books")
-                print("5 - Search books")
-                print("6 - Add book")
-                print("7 - Remove book")
+                print(f"4 - Select library (Current: {UserSettings.user_library_name})")
+                print("5 - List all books")
+                print("6 - Search books")
+                print("7 - Add book")
+                print("8 - Remove book")
             print()
             print("0 - Exit")
             option = UserSettings.read_menu_option(">> ")
@@ -439,33 +440,36 @@ class User:
                     User.list_users()
                     hold_clear = True
                 else:
-                    BookStore.list_entries()
+                    User.set_library()
                     hold_clear = True
             elif option == 5:
                 if self.is_admin:
                     User.register_form(0)
                     hold_clear = True
                 else:
-                    BookStore.search_book()
+                    BookStore.list_entries(UserSettings.user_library_name)
                     hold_clear = True
             elif option == 6:
                 if self.is_admin:
                     User.set_active_by_user(1)
                     hold_clear = True
                 else:
-                    BookStore.add_entry()
+                    BookStore.search_book(UserSettings.user_library_name)
                     hold_clear = True
-
             elif option == 7:
                 if self.is_admin:
                     User.set_active_by_user(0)
                     hold_clear = True
                 else:
-                    BookStore.delete_book()
+                    BookStore.add_entry(UserSettings.user_library_name)
                     hold_clear = True
-            elif option == 8 and self.is_admin:
-                User.delete_user_by_name()
-                hold_clear = True
+            elif option == 8:
+                if self.is_admin:
+                    User.delete_user_by_name()
+                    hold_clear = True
+                else:
+                    BookStore.delete_book(UserSettings.user_library_name)
+                    hold_clear = True
             elif option == 9 and self.is_admin:
                 User.promote_user_by_name()
                 hold_clear = True
@@ -478,6 +482,13 @@ class User:
                 print()
                 return self
         return None
+
+    @staticmethod
+    def set_library():
+        if UserSettings.at_cli:
+            UserSettings.clear()
+        UserSettings.user_library_name = input("Library name: ")
+        UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
 
     def log_to_file(self):
         logging.basicConfig(filename="Users.log",
@@ -529,3 +540,4 @@ class User:
     @staticmethod
     def checkhash(password, hashed_password):
         return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+
