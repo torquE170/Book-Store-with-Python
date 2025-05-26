@@ -4,7 +4,8 @@
 ### As a logged-in administrator you can:
 1) Manage users(list, add, remove, promote, demote, user status - active/deactivated)
 ### As a logged-in user you can:
-1) Manage available books(add, remove, edit)
+1) Select working library (possibility to have multiple individual libraries)
+2) Manage available books(add, remove, edit)
 2) Lend books to clients
 3) Receive returned books from clients
 
