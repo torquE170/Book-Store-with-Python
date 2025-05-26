@@ -8,6 +8,11 @@ config_object["USER-SETTINGS"] = {
     "at_cli" : "0",
     "use_sqlite3" : "1"
 }
+
+config_object["USER-LIBRARY"] = {
+    "name" : "BookStore"
+}
+
 config_object["DB-CONNECTION"] = {
     "host" : "192.168.188.87",
     "port" : "33006",
