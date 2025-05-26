@@ -489,6 +489,7 @@ class User:
             UserSettings.clear()
         UserSettings.user_library_name = input("Library name: ")
         UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
+        print()
 
     def log_to_file(self):
         logging.basicConfig(filename="Users.log",

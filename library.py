@@ -16,9 +16,13 @@ class Library:
             typed_out = "-" * 60 + "\n"
         else:
             typed_out = ""
+        last_entry = self.entries.pop()
         for entry in self.entries:
             typed_out += f"{entry}\n"
             typed_out += "-" * 60 + "\n"
+        typed_out += f"{last_entry}\n"
+        typed_out += f" END ".center(60, "-")
+        typed_out += "\n"
         return typed_out
 
     def add_entry(self, new_book):
@@ -61,9 +65,14 @@ class BookStore:
         typed_out += "\n"
         if not len(self.entries):
             typed_out += "Empty library\n"
+
+        last_entry = self.entries.pop()
         for entry in self.entries:
             typed_out += f"{entry}\n"
             typed_out += "-" * 60 + "\n"
+        typed_out += f"{last_entry}\n"
+        typed_out += f" END ".center(60, "-")
+        typed_out += "\n"
         return typed_out
 
 
