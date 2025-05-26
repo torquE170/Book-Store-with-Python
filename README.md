@@ -11,10 +11,11 @@
 
 ## Config file
 An ini config file, that: 
-1) Sets connect data for a mysql server. 
+1) Sets connect data for a mysql server.
 2) Config parameter to use an internal sqlite3 db file or use a mysql server
 3) Sets getpass() as function for reading password when in terminal 
 and uses "clear" commands for windows and linux
+4) Selects the working books library for the user
 
 ## A log text file
 1) A txt log file with login time, date and a unique session id so the app keeps a record
