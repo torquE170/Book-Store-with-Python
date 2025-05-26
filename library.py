@@ -57,11 +57,10 @@ class BookStore:
         self.entries = entries
 
     def __repr__(self):
-        if len(self.entries):
-            typed_out = f" {self.db_table} ".center(60, "-")
-            typed_out += "\n"
-        else:
-            typed_out = ""
+        typed_out = f" {UserSettings.user_library_name} ".center(60, "-")
+        typed_out += "\n"
+        if not len(self.entries):
+            typed_out += "Empty library\n"
         for entry in self.entries:
             typed_out += f"{entry}\n"
             typed_out += "-" * 60 + "\n"
@@ -69,7 +68,7 @@ class BookStore:
 
 
     def save_entry(self, new_entry):
-        next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
+        next_id = SqlDB.get_last_id(UserSettings.user_library_name, UserSettings.use_sqlite3) + 1
         # self.entries.append(BookStoreEntry(new_entry, next_id))
         this_entry = BookStoreEntry(new_entry, next_id)
         try:
@@ -80,26 +79,26 @@ class BookStore:
             print()
 
     @staticmethod
-    def add_entry():
+    def add_entry(table = db_table):
         """Use for entering a book from keyboard and saving it to database"""
         if UserSettings.at_cli:
             UserSettings.clear()
         print(f" Add book ".center(60, "-"))
         new_entry = BookStoreEntry.get_entry()
         try:
-            new_entry.db_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
-            new_entry.save_to_db()
+            new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+            new_entry.save_to_db(table)
         except ProgrammingError:
-            print(f"Table {BookStore.db_table} not available")
+            print(f"Table {table} not available")
             print()
             try:
-                BookStore.init_db(BookStore.db_table)
-                print(f"Created new table {BookStore.db_table}")
+                BookStore.init_db(table)
+                print(f"Created new table {table}")
                 print()
-                new_entry.db_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
-                new_entry.save_to_db()
+                new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                new_entry.save_to_db(table)
             except ProgrammingError:
-                print(f"Tried to make new {BookStore.db_table}, and failed")
+                print(f"Tried to make new {table}, and failed")
                 print("Exiting")
                 print()
                 return
