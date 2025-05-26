@@ -101,6 +101,7 @@ class SqlConn(mysql.connector.MySQLConnection):
             self.close()
         return False
 
+
 class Sqlite3Conn(sqlite3.Connection):
     def __init__(self, db_file):
         super().__init__(db_file + ".sqlite3")
@@ -186,6 +187,7 @@ class Sqlite3Conn(sqlite3.Connection):
 
 def __del__(self):
         self.close()
+
 
 class SqlDB:
     @staticmethod
