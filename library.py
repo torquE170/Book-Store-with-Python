@@ -127,7 +127,7 @@ class BookStore:
             UserSettings.clear()
         book_store = BookStore()
         list_query = f"""
-        SELECT ID, Name, Author, Quantity, Available FROM {table};
+            SELECT ID, Name, Author, Quantity, Available FROM {table};
         """
         try:
             books_list = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
@@ -169,7 +169,7 @@ class BookStore:
 
         queried_books = BookStore()
         search_query = f"""
-        SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE {search_by} LIKE "%{keyword}%";
+            SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE {search_by} LIKE "%{keyword}%";
         """
         try:
             result_list = SqlDB.sql_query_result(search_query, use_sqlite3=UserSettings.use_sqlite3)
@@ -219,13 +219,13 @@ class BookStore:
             value = f"\"{value}\""
 
         delete_statement = f"""
-        DELETE FROM {table} WHERE {delete_by}={value};
+            DELETE FROM {table} WHERE {delete_by}={value};
         """
         SqlDB.sql_query(delete_statement, table, use_sqlite3=UserSettings.use_sqlite3)
         print()
         select_query = f"""
-        SELECT ID, Name FROM {table}
-        WHERE {delete_by} = {value};
+            SELECT ID, Name FROM {table}
+            WHERE {delete_by} = {value};
         """
         result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
         if len(result) == 0:
@@ -234,9 +234,9 @@ class BookStore:
 
 
     @staticmethod
-    def init_db(db_table, drop = False):
-        query_init = f'''
-            CREATE TABLE {db_table} (
+    def init_db(table, drop = False):
+        init_query = f'''
+            CREATE TABLE {table} (
             ID INT NOT NULL,
             Name VARCHAR(50) NOT NULL UNIQUE,
             Author VARCHAR(128) NOT NULL,
@@ -245,9 +245,9 @@ class BookStore:
             Publisher VARCHAR(50),
             Genre VARCHAR(128),
             PRIMARY KEY(ID)
-        );
+            );
         '''
-        SqlDB.sql_query(query_init, db_table, drop, UserSettings.use_sqlite3)
+        SqlDB.sql_query(init_query, table, drop, UserSettings.use_sqlite3)
 
 
 class BookStoreEntry:
@@ -277,3 +277,87 @@ class BookStoreEntry:
         print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
         print()
         return self
+
+
+class BookStores:
+
+    db_table = "Libraries"
+    def __init__(self, entries = None):
+        if entries is None:
+            entries = list()
+        self.entries = entries
+
+    def __repr__(self):
+        typed_out = f" {BookStores.db_table} ".center(60, "-")
+        typed_out += "\n"
+        if not len(self.entries):
+            typed_out += "Empty list\n"
+
+        last_entry = self.entries.pop()
+        for entry in self.entries:
+            typed_out += f"{entry}\n"
+            typed_out += "-" * 60 + "\n"
+        typed_out += f"{last_entry}\n"
+        typed_out += f" END ".center(60, "-")
+        typed_out += "\n"
+        return typed_out
+
+    @staticmethod
+    def init_db(table = db_table, drop = False):
+        init_query = f"""
+            CREATE TABLE {table} (
+            ID INT NOT NULL,
+            Library VARCHAR(50) NOT NULL UNIQUE,
+            PRIMARY KEY(ID)
+            );
+        """
+        SqlDB.sql_query(init_query, table, drop, UserSettings.use_sqlite3)
+
+    @staticmethod
+    def save_to_db(library_name, table = db_table):
+        try:
+            next_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+        except ProgrammingError:
+            BookStores.init_db()
+            next_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+        insert_query = f"""
+            INSERT INTO {table} (ID, Library)
+            VALUES ({next_id}, "{library_name}");
+        """
+        try:
+            SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
+        except IntegrityError:
+            print(f"Library {library_name} was already saved to the list.")
+            print()
+            return
+        print(f"Library {library_name} saved to libraries list.")
+        print()
+
+    @staticmethod
+    def list_libraries(table = db_table):
+        if UserSettings.at_cli:
+            UserSettings.clear()
+        stores_list = BookStores()
+        select_query = f"""
+            SELECT * FROM {table};
+        """
+        try:
+            libraries_list = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+        except ProgrammingError:
+            print(f"Table {table} not available")
+            print()
+            return
+
+        for entry in libraries_list:
+            stores_list.entries.append(BookStoresEntry(entry[0], entry[1]))
+        print(stores_list)  # or return it
+
+class BookStoresEntry:
+
+    def __init__(self, db_id, name):
+        self.db_id = db_id
+        self.name = name
+
+    def __repr__(self):
+        typed_out = f"ID: {self.db_id:<3} Name: {self.name:<15s}"
+        return typed_out

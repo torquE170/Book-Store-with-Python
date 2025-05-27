@@ -2,9 +2,9 @@ import sqlite3
 from user import User
 from sql_conn import SqlDB
 from getpass import getpass
+from library import BookStores
 from user_settings import UserSettings
 from mysql.connector import ProgrammingError
-
 
 
 class Login:
@@ -18,7 +18,7 @@ class Login:
             print("2 - Reset your password")
             print()
             print("0 - Exit")
-            option = User.read_menu_option(">> ")
+            option = UserSettings.read_menu_option(">> ")
             print()
             if option == 1:
                 return User.register_user()
@@ -28,9 +28,8 @@ class Login:
                     print("Reset password form")
                     username = input("Username: ")
                     print()
-                    db_table = "Users_db"
-                    select_query = f"""SELECT Username, isActive FROM {db_table};"""
-                    result = SqlDB.sql_query_result(select_query, use_sqlite3=User.use_sqlite3)
+                    select_query = f"""SELECT Username, isActive FROM {User.db_table};"""
+                    result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
                     for result_user in result:
                         if username == result_user[0]:
                             valid = True
@@ -115,14 +114,13 @@ class Login:
             username_check = False
             password_check = False
             active_check = False
-            db_table = "Users_db"
-            select_query = f"""SELECT Username, passwordHash, isActive, isAdmin FROM {db_table};"""
+            select_query = f"""SELECT Username, passwordHash, isActive, isAdmin FROM {User.db_table};"""
             try:
                 result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             except ProgrammingError:
-                result = User.init_db("Users_db", True)
+                result = User.init_db(User.db_table, True)
             except sqlite3.OperationalError:
-                result = User.init_db("Users_db", True)
+                result = User.init_db(User.db_table, True)
             if result is not None:
                 for result_user in result:
                     if username == result_user[0]:
@@ -147,7 +145,7 @@ class Login:
                             has_password = 1
                         # recheck this condition
                         if username_check:
-                            select_query = f"""SELECT Username, fullName, isAdmin, isActive, passwordHash FROM {db_table} WHERE Username = "{result_user[0]}";"""
+                            select_query = f"""SELECT Username, fullName, isAdmin, isActive, passwordHash FROM {User.db_table} WHERE Username = "{result_user[0]}";"""
                             result_user = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)[0]
                             if result_user[4] is None:
                                 has_password = 0
@@ -164,4 +162,5 @@ class Login:
 
 
 UserSettings.set_config()
+BookStores.save_to_db(UserSettings.user_library_name)
 Login.login_form()

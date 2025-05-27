@@ -3,12 +3,12 @@ import bcrypt
 import logging
 from sql_conn import SqlDB
 from getpass import getpass
-from library import BookStore
 from user_settings import UserSettings
+from library import BookStore, BookStores
 
 
 class User:
-    db_table = "Users_db"
+    db_table = "Users"
     def __init__(self, username, full_name = None, is_admin = 0, is_active = 0, has_password = 0,
                  request_logout = 0, request_exit = 0, correct_password = 0, password_tries = 0):
         self.session_id = uuid.uuid4()
@@ -456,7 +456,7 @@ class User:
                     User.register_form(0)
                     hold_clear = True
                 else:
-                    # list libraries
+                    BookStores.list_libraries()
                     hold_clear = True
             elif option == 6:
                 if self.is_admin:
@@ -502,6 +502,7 @@ class User:
             UserSettings.clear()
         UserSettings.user_library_name = input("Library name: ")
         UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
+        BookStores.save_to_db(UserSettings.user_library_name)
         print()
 
     def log_to_file(self):
