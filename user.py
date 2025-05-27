@@ -411,6 +411,7 @@ class User:
             print("1 - Log out")
             print("2 - User details")
             print("3 - Set full user name")
+            print("  -")
             if self.is_admin:
                 print("4 - List users")
                 print("5 - Register user")
@@ -421,10 +422,12 @@ class User:
                 print("10 - Demote a admin")
             else:
                 print(f"4 - Select library (Current: {UserSettings.user_library_name})")
-                print("5 - List all books")
-                print("6 - Search books")
-                print("7 - Add book")
-                print("8 - Remove book")
+                print("5 - List libraries")
+                print("  -")
+                print("6 - List all books")
+                print("7 - Search books")
+                print("8 - Add book")
+                print("9 - Remove book")
             print()
             print("0 - Exit")
             option = UserSettings.read_menu_option(">> ")
@@ -453,32 +456,36 @@ class User:
                     User.register_form(0)
                     hold_clear = True
                 else:
-                    BookStore.list_entries(UserSettings.user_library_name)
+                    # list libraries
                     hold_clear = True
             elif option == 6:
                 if self.is_admin:
                     User.set_active_by_user(1)
                     hold_clear = True
                 else:
-                    BookStore.search_book(UserSettings.user_library_name)
+                    BookStore.list_entries(UserSettings.user_library_name)
                     hold_clear = True
             elif option == 7:
                 if self.is_admin:
                     User.set_active_by_user(0)
                     hold_clear = True
                 else:
-                    BookStore.add_entry(UserSettings.user_library_name)
+                    BookStore.search_book(UserSettings.user_library_name)
                     hold_clear = True
             elif option == 8:
                 if self.is_admin:
                     User.delete_user_by_name()
                     hold_clear = True
                 else:
+                    BookStore.add_entry(UserSettings.user_library_name)
+                    hold_clear = True
+            elif option == 9:
+                if self.is_admin:
+                    User.promote_user_by_name()
+                    hold_clear = True
+                else:
                     BookStore.delete_book(UserSettings.user_library_name)
                     hold_clear = True
-            elif option == 9 and self.is_admin:
-                User.promote_user_by_name()
-                hold_clear = True
             elif option == 10 and self.is_admin:
                 User.demote_user_by_name()
                 hold_clear = True

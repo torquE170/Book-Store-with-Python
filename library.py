@@ -30,6 +30,7 @@ class Library:
         new_entry = LibraryEntry(new_book, quantity)
         self.entries.append(new_entry)
 
+
 class LibraryEntry:
 
     def __init__(self, book: Book, quantity, available = None):
@@ -51,6 +52,7 @@ class LibraryEntry:
         quantity = int(input("Quantity: "))
         new_entry = LibraryEntry(new_book, quantity)
         return new_entry
+
 
 class BookStore:
 
@@ -246,6 +248,7 @@ class BookStore:
         );
         '''
         SqlDB.sql_query(query_init, db_table, drop, UserSettings.use_sqlite3)
+
 
 class BookStoreEntry:
 
