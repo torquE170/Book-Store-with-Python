@@ -352,6 +352,7 @@ class BookStores:
             stores_list.entries.append(BookStoresEntry(entry[0], entry[1]))
         print(stores_list)  # or return it
 
+
 class BookStoresEntry:
 
     def __init__(self, db_id, name):
