@@ -8,7 +8,7 @@ from user_settings import UserSettings
 
 
 class User:
-
+    db_table = "Users_db"
     def __init__(self, username, full_name = None, is_admin = 0, is_active = 0, has_password = 0,
                  request_logout = 0, request_exit = 0, correct_password = 0, password_tries = 0):
         self.session_id = uuid.uuid4()
@@ -49,9 +49,8 @@ class User:
 
     @staticmethod
     def list_users():
-        db_table = "Users_db"
         list_query = f"""
-        SELECT ID, Username, isAdmin, isActive FROM {db_table};
+        SELECT ID, Username, isAdmin, isActive FROM {User.db_table};
         """
         user_list = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
         if UserSettings.at_cli:
@@ -68,12 +67,11 @@ class User:
         self.set_admin(0)
 
     def set_admin(self, state):
-        db_table = "Users_db"
-        update_query = f"""UPDATE {db_table}
+        update_query = f"""UPDATE {User.db_table}
         SET isAdmin = {state}
         WHERE Username = "{self.username}";
         """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(update_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         if self.is_admin:
             been_admin = True
         else:
@@ -88,13 +86,14 @@ class User:
 
     @staticmethod
     def promote_user_by_name():
+        if UserSettings.at_cli:
+            UserSettings.clear()
         valid = False
         while not valid:
-            print("Promotion user form")
+            print(" Promotion user form ".center(60, "-"))
             username = input("Username: ")
             print()
-            db_table = "Users_db"
-            select_query = f"""SELECT Username, isActive FROM {db_table};"""
+            select_query = f"""SELECT Username, isActive FROM {User.db_table};"""
             result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
@@ -108,13 +107,14 @@ class User:
 
     @staticmethod
     def demote_user_by_name():
+        if UserSettings.at_cli:
+            UserSettings.clear()
         valid = False
         while not valid:
-            print("Demotion user form")
+            print(" Demotion user form ".center(60, "-"))
             username = input("Username: ")
             print()
-            db_table = "Users_db"
-            select_query = f"""SELECT Username, isActive FROM {db_table};"""
+            select_query = f"""SELECT Username, isActive FROM {User.db_table};"""
             result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
@@ -132,23 +132,31 @@ class User:
             state: 0 for inactive
                    1 for active
         """
-        db_table = "Users_db"
-        update_query = f"""UPDATE {db_table}
+        update_query = f"""UPDATE {User.db_table}
                 SET isActive = {state}
                 WHERE Username = "{self.username}";
                 """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(update_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         if self.is_active:
             been_active = True
         else:
             been_active = False
         self.is_active = state
-        if not self.is_active and been_active:
-            print(f"User {self.username} has been deactivated")
-            print()
-        elif self.is_active and not been_active:
-            print(f"User {self.username} has been activated")
-            print()
+        if not self.is_active:
+            if been_active:
+                print(f"User {self.username} has been deactivated")
+                print()
+            else:
+                print(f"User {self.username} was already inactive")
+                print()
+        elif self.is_active:
+            if not been_active:
+                print(f"User {self.username} has been activated")
+                print()
+            else:
+                print(f"User {self.username} was already active")
+                print()
+
 
     @staticmethod
     def set_active_by_user(state):
@@ -157,13 +165,14 @@ class User:
             state: 0 for inactive
                    1 for active
         """
+        if UserSettings.at_cli:
+            UserSettings.clear()
         valid = False
         while not valid:
-            print(f"{"Activate" if state else "Deactivate"} user form")
+            print(f" {"Activate" if state else "Deactivate"} user form ".center(60, "-"))
             username = input("Username: ")
             print()
-            db_table = "Users_db"
-            select_query = f"""SELECT Username, isActive FROM {db_table};"""
+            select_query = f"""SELECT Username, isActive FROM {User.db_table};"""
             result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
@@ -177,12 +186,11 @@ class User:
         reset_user.set_active(state)
 
     def delete_user(self):
-        db_table = "Users_db"
-        delete_query = f"""DELETE FROM {db_table}
+        delete_query = f"""DELETE FROM {User.db_table}
         WHERE Username = "{self.username}";
         """
-        SqlDB.sql_query(delete_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
-        select_query = f"""SELECT Username FROM {db_table}
+        SqlDB.sql_query(delete_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
+        select_query = f"""SELECT Username FROM {User.db_table}
         WHERE Username = "{self.username}"
         """
         result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
@@ -192,19 +200,20 @@ class User:
 
     @staticmethod
     def delete_user_by_name():
+        if UserSettings.at_cli:
+            UserSettings.clear()
         valid = False
         last_admin = False
         while not valid:
-            print("Delete user form")
+            print(" Delete user form ".center(60, "-"))
             username = input("Username: ")
             print()
-            db_table = "Users_db"
-            select_query = f"""SELECT Username, isAdmin, isActive FROM {db_table};"""
+            select_query = f"""SELECT Username, isAdmin, isActive FROM {User.db_table};"""
             result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for result_user in result:
                 if username == result_user[0]:
                     if result_user[1]:
-                        select_query = f"""SELECT Username FROM {db_table} WHERE isAdmin = 1;"""
+                        select_query = f"""SELECT Username FROM {User.db_table} WHERE isAdmin = 1;"""
                         result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
                         if len(result) == 1:
                             print(f"Cannot delete last admin {result[0][0]}")
@@ -235,17 +244,15 @@ class User:
                 delete_user.delete_user()
 
     def set_username(self):
-        db_table = "Users_db"
         username = input("Username: ")
-        update_query = f"""UPDATE {db_table}
+        update_query = f"""UPDATE {User.db_table}
         SET Username = "{username}"
         WHERE Username = "{self.username}";
         """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(update_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         self.username = username
 
     def set_password(self):
-        db_table = "Users_db"
         if UserSettings.at_cli:
             password1 = "password1"
             password2 = "password2"
@@ -268,12 +275,12 @@ class User:
             password = password1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw(password, salt)
-        update_query = f"""UPDATE {db_table} 
+        update_query = f"""UPDATE {User.db_table} 
         SET passwordHash = "{password_hash}"
         WHERE Username = "{self.username}";
         """
         # passwordSalt = "{salt.decode("utf-8")}"
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(update_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         self.has_password = 1
         self.correct_password = 1
         print("Password has been set")
@@ -281,14 +288,16 @@ class User:
         print()
 
     def set_full_name(self):
-        db_table = "Users_db"
+        if UserSettings.at_cli:
+            UserSettings.clear()
+        print(" Set user fullname ".center(60, "-"))
         full_name = input("Full name: ")
         print()
-        update_query = f"""UPDATE {db_table}
+        update_query = f"""UPDATE {User.db_table}
                 SET fullName = "{full_name}"
                 WHERE Username = "{self.username}";
                 """
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(update_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         self.full_name = full_name
         print(f"User {self.username} now has \"{self.full_name}\" as display name")
         print()
@@ -306,7 +315,6 @@ class User:
     @staticmethod
     def reset_password(username):
         print(f"Reset password for {username}")
-        db_table = "Users_db"
         if UserSettings.at_cli:
             password1 = "password1"
             password2 = "password2"
@@ -331,18 +339,18 @@ class User:
             password = password1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw(password, salt)
-        update_query = f"""UPDATE {db_table} 
+        update_query = f"""UPDATE {User.db_table} 
             SET passwordHash = "{password_hash}"
             WHERE Username = "{username}";
             """
         # passwordSalt = "{salt.decode("utf-8")}"
-        SqlDB.sql_query(update_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(update_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         print()
         print("Password has been reset")
         User.wait_for_enter()
 
         query = f"""SELECT Username, isAdmin, isActive 
-        FROM {db_table} 
+        FROM {User.db_table} 
         WHERE Username = "{username}";
         """
         result = SqlDB.sql_query_result(query, use_sqlite3=UserSettings.use_sqlite3)[0]
@@ -353,12 +361,11 @@ class User:
     def register_form(active = 1):
         if UserSettings.at_cli:
             UserSettings.clear()
-        print("Register a user")
+        print(" Register a user ".center(60, "-"))
         valid = False
         while not valid:
             username = input("Username: ")
-            db_table = "Users_db"
-            select_query = f"""SELECT Username FROM {db_table};"""
+            select_query = f"""SELECT Username FROM {User.db_table};"""
             names = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             for name in names:
                 if username == name[0]:
@@ -378,13 +385,12 @@ class User:
 
     @staticmethod
     def add_new_user(username):
-        db_table = "Users_db"
-        next_id = SqlDB.get_last_id(db_table, UserSettings.use_sqlite3) + 1
+        next_id = SqlDB.get_last_id(User.db_table, UserSettings.use_sqlite3) + 1
         insert_query = f"""
-        INSERT INTO {db_table} (ID, Username, isAdmin, isActive)
+        INSERT INTO {User.db_table} (ID, Username, isAdmin, isActive)
         VALUES ({next_id}, "{username}",  0, 0);
         """
-        SqlDB.sql_query(insert_query, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(insert_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         print(f"User {username} has been registered and needs activation")
         print()
         return User(username, is_admin=0, is_active=0)
@@ -505,9 +511,9 @@ class User:
         logging.info(f'{self.username} logged {action} with session_id = {self.session_id}')
 
     @staticmethod
-    def init_db(db_table, drop = False):
+    def init_db(table, drop = False):
         query_init = f'''
-        CREATE TABLE {db_table} (
+        CREATE TABLE {table} (
         ID INT NOT NULL,
         Username VARCHAR(50) NOT NULL UNIQUE,
         fullName VARCHAR(128),
@@ -517,15 +523,15 @@ class User:
         PRIMARY KEY(ID)
         );
         '''
-        SqlDB.sql_query(query_init, db_table, drop, UserSettings.use_sqlite3)
-        next_id = SqlDB.get_last_id(db_table, UserSettings.use_sqlite3) + 1
+        SqlDB.sql_query(query_init, table, drop, UserSettings.use_sqlite3)
+        next_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
         salt = bcrypt.gensalt()
         password_hash = User.hashpw("adminadmin", salt)
         query_admin = f'''
-        INSERT INTO {db_table} (ID, Username, isAdmin, isActive, passwordHash)
+        INSERT INTO {table} (ID, Username, isAdmin, isActive, passwordHash)
         VALUES ({next_id}, "admin",  1, 0, "{password_hash}");
         '''
-        SqlDB.sql_query(query_admin, db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(query_admin, table, use_sqlite3=UserSettings.use_sqlite3)
         return None
 
     @staticmethod
