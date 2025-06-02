@@ -5,7 +5,7 @@
 1) Manage users(list, add, remove, promote, demote, user status - active/deactivated)
 ### As a logged-in user you can:
 1) Select working library (possibility to have multiple individual libraries)
-2) Manage available books(add, remove, edit)
+2) Manage available books(add, remove)
 2) Lend books to clients
 3) Receive returned books from clients
 
@@ -21,9 +21,12 @@ and uses "clear" commands for windows and linux
 1) A txt log file with login time, date and a unique session id so the app keeps a record
 
 ## Next steps
-1) Create 2 additional tables for: 
-   - keeping a record of available books
-   - keeping a record of lent books
+1) When removing a library, add functionality:
+   - distribute books in that library to other libraries that have more of that book
+   - modify quantities and available counters 
+   - distribute equally books that aren't present elsewhere
+   - drop table in the database
+2) Add return a book method
 
 ### Technical information
 1) Used python packages:

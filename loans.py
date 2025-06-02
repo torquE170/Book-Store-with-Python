@@ -1,8 +1,7 @@
-from book import Book
 from library import BookStore, LibraryEntry
 from sql_conn import SqlDB
 from user_settings import UserSettings
-from mysql.connector import ProgrammingError, IntegrityError
+from mysql.connector import ProgrammingError
 
 
 class Loans:
@@ -16,6 +15,7 @@ class Loans:
             ClientName VARCHAR(128) NOT NULL,
             BookName VARCHAR(128) NOT NULL,
             BookAuthor VARCHAR(128) NOT NULL,
+            LibraryName VARCHAR(128) NOT NULL,
             PRIMARY KEY(ID)
             );
         '''
@@ -35,19 +35,22 @@ class Loans:
             print(f"Table {table} not available")
             print()
             return
-        column_width = [0, 0, 0, 0]
+        column_width = [0, 0, 0, 0, 0]
         for entry in result:
             if len(str(entry[0])) + 2 > column_width[0]:
                 column_width[0] = len(str(entry[0])) + 2
             for column in range(1, len(entry)):
                 if len(entry[column]) + 2 > column_width[column]:
                     column_width[column] = len(entry[column]) + 2
+        total_width = sum(column_width) + 3
 
         # print or return it
-        print(f" Loans ".center(60, "-"))
+        print(f" Loans ".center(total_width, "-"))
+        print(f"{"ID":>{column_width[0]}} {"Client":<{column_width[1]}} {"Book Name":<{column_width[2]}} {"Book Author":<{column_width[3]}} {"Library":<{column_width[4]}}")
+        print("-" * total_width)
         for entry in result:
-            print(f"{entry[0]:>{column_width[0]}} {entry[1]:>{column_width[1]}} {entry[2]:>{column_width[2]}} {entry[3]:>{column_width[3]}}")
-        print(f" END ".center(60, "-"))
+            print(f"{entry[0]:>{column_width[0]}} {entry[1]:<{column_width[1]}} {entry[2]:<{column_width[2]}} {entry[3]:<{column_width[3]}} {entry[4]:<{column_width[4]}}")
+        print(f" END ".center(total_width, "-"))
         print()
 
     @staticmethod
@@ -57,37 +60,45 @@ class Loans:
         print(f" Rent book ".center(60, "-"))
         name = input("Client name: ")
         book_found = False
-        list_length = -1
-        while book_found != True and list_length != 1:
+        while not book_found:
             book_name = input("Book name: ")
-            book = BookStore.search_book_by_name(book_name)
+            if book_name.strip().upper() == "SKIP":
+                print(f" END ".center(60, "-"))
+                return
+            print()
+            book = BookStore.search_book_by_name(book_name, UserSettings.user_library_name)
             if book is None:
                 print("Book not found\n")
             else:
                 book_found = True
 
-        if not book_found:
-            print(f"No book with {book_name} in title")
-            print()
-
         loan_entry = LoansEntry(client_name=name, book=book)
-        try:
-            loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-            loan_entry.save_to_db()
-        except ProgrammingError:
-            print(f"Table {table} not available")
-            print()
+        if loan_entry.book.entry.available > 0:
             try:
-                Loans.init_db()
-                print(f"Created new table {table}")
-                print()
                 loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
                 loan_entry.save_to_db()
+                print(f" END ".center(60, "-"))
+                BookStore.loaned_one(loan_entry.book)
             except ProgrammingError:
-                print(f"Tried to make new {table}, and failed")
-                print("Exiting")
+                print(f"Table {table} not available")
                 print()
+                try:
+                    Loans.init_db()
+                    print(f"Created new table {table}")
+                    print()
+                    loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                    loan_entry.save_to_db()
+                    print(f" END ".center(60, "-"))
+                except ProgrammingError:
+                    print(f"Tried to make new {table}, and failed")
+                    print("Exiting")
+                    print()
+                    print(f" END ".center(60, "-"))
+                    return
                 return
+        else:
+            print("No more available copies")
+            print()
             return
 
 
@@ -105,8 +116,8 @@ class LoansEntry:
 
     def save_to_db(self, table = Loans.db_table):
         insert_query = f"""
-            INSERT INTO {table} (ID, ClientName, BookName, BookAuthor)
-            VALUES ({self.db_id}, "{self.client_name}", "{self.book.entry.book.name}", "{self.book.entry.book.author}");
+            INSERT INTO {table} (ID, ClientName, BookName, BookAuthor, LibraryName)
+            VALUES ({self.db_id}, "{self.client_name}", "{self.book.entry.book.name}", "{self.book.entry.book.author}", "{UserSettings.user_library_name}");
         """
         SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
         print(f"{self.client_name} loaned {self.book.entry.book.name} book.")

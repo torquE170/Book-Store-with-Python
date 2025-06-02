@@ -253,6 +253,14 @@ class BookStore:
             print(f"Book with {delete_by}: {value} has been deleted")
             print()
 
+    @staticmethod
+    def loaned_one(book : LibraryEntry):
+        query = f"""
+        UPDATE {UserSettings.user_library_name} 
+        SET Available = {book.entry.available - 1} 
+        WHERE Name = \"{book.entry.book.name}\";
+        """
+        SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
 
     @staticmethod
     def init_db(table, drop = False):
