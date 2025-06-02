@@ -352,13 +352,102 @@ class BookStores:
             stores_list.entries.append(BookStoresEntry(entry[0], entry[1]))
         print(stores_list)  # or return it
 
+    @staticmethod
+    def del_library(table = db_table):
+        if UserSettings.at_cli:
+            UserSettings.clear()
+
+        delete_by = ""
+        opt = -1
+        while opt != 0:
+            print("Delete library by:")
+            print("1 - ID")
+            print("2 - Library")
+            print()
+            print("0 - Cancel")
+            opt = UserSettings.read_menu_option(">> ")
+            print()
+            if opt == 1:
+                delete_by = "ID"
+                break
+            if opt == 2:
+                delete_by = "Library"
+                break
+            if opt == 0:
+                print("Delete operation canceled")
+                return
+        if UserSettings.at_cli:
+            UserSettings.clear()
+
+        value = ""
+        if delete_by == "ID":
+            value = int(input("ID: "))
+        if delete_by == "Library":
+            value = input("Library: ")
+            value = f"\"{value}\""
+
+        select_query = f"""
+            SELECT ID, Library FROM {table}
+            WHERE {delete_by} = {value};
+        """
+        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+        name = ""
+        if delete_by == "ID":
+            name = input("Confirm by entring library name: ")
+            if result[0][1] == name:
+                print("Confirmed")
+            else:
+                print("Canceled")
+                print()
+                return
+
+        if delete_by == "Library":
+            db_id = int(input("Confirm by entering library id: "))
+            if result[0][0] == db_id:
+                print("Confirmed")
+            else:
+                print("Canceled")
+                print()
+                return
+
+        select_query = f"""
+            SELECT * FROM {table};
+        """
+        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+        if len(result) < 1:
+            UserSettings.user_library_name = "No libraries available"
+        else:
+            for i in range(len(result) - 1):
+                if delete_by == "Library" and value == result[i][1] or delete_by == "ID" and name == result[i][1]:
+                    UserSettings.user_library_name = result[i + 1][1]
+            if delete_by == "Library" and value == result[len(result) - 1][1] or delete_by == "ID" and name == result[len(result) - 1][1]:
+                UserSettings.user_library_name = result[len(result) - 2][1]
+
+        delete_statement = f"""
+            DELETE FROM {table} WHERE {delete_by}={value};
+        """
+        SqlDB.sql_query(delete_statement, table, use_sqlite3=UserSettings.use_sqlite3)
+        print()
+        select_query = f"""
+            SELECT ID, Library FROM {table}
+            WHERE {delete_by} = {value};
+        """
+        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+        if len(result) == 0:
+            print(f"Library with {delete_by}: {value} has been deleted")
+            print()
+
 
 class BookStoresEntry:
 
-    def __init__(self, db_id, name):
+    def __init__(self, db_id=0, name=""):
         self.db_id = db_id
         self.name = name
 
     def __repr__(self):
         typed_out = f"ID: {self.db_id:<3} Name: {self.name:<15s}"
         return typed_out
+
+    def get_entry(self):
+        self.db_id = int(input("ID = "))
+        self.name = input("Name = ")
