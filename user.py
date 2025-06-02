@@ -434,7 +434,7 @@ class User:
                 print("   -")
                 print("11 - List lent books")
                 print("12 - Lend a book")
-                print("13 - Get a returned book")
+                print("13 - Return a book")
             print()
             print("0 - Exit")
             option = UserSettings.read_menu_option(">> ")
