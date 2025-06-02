@@ -1,6 +1,8 @@
 import uuid
 import bcrypt
 import logging
+
+from loans import Loans
 from sql_conn import SqlDB
 from getpass import getpass
 from user_settings import UserSettings
@@ -408,27 +410,31 @@ class User:
                 UserSettings.clear()
             else:
                 hold_clear = False
-            print("1 - Log out")
-            print("2 - User details")
-            print("3 - Set full user name")
-            print("  -")
+            print(" 1 - Log out")
+            print(" 2 - User details")
+            print(" 3 - Set full user name")
+            print("   -")
             if self.is_admin:
-                print("4 - List users")
-                print("5 - Register user")
-                print("6 - Activate a user")
-                print("7 - Deactivate a user")
-                print("8 - Delete a user")
-                print("9 - Promote a user")
+                print(" 4 - List users")
+                print(" 5 - Register user")
+                print(" 6 - Activate a user")
+                print(" 7 - Deactivate a user")
+                print(" 8 - Delete a user")
+                print(" 9 - Promote a user")
                 print("10 - Demote a admin")
             else:
-                print(f"4 - Select library (Current: {UserSettings.user_library_name})")
-                print("5 - List libraries")
-                print("6 - Delete a library")
-                print("  -")
-                print("7 - List all books")
-                print("8 - Search books")
-                print("9 - Add book")
+                print(f" 4 - Select library (Current: {UserSettings.user_library_name})")
+                print(" 5 - List libraries")
+                print(" 6 - Delete a library")
+                print("   -")
+                print(" 7 - List all books")
+                print(" 8 - Search books")
+                print(" 9 - Add book")
                 print("10 - Remove book")
+                print("   -")
+                print("11 - List lent books")
+                print("12 - Lend a book")
+                print("13 - Get a returned book")
             print()
             print("0 - Exit")
             option = UserSettings.read_menu_option(">> ")
@@ -493,6 +499,27 @@ class User:
                     hold_clear = True
                 else:
                     BookStore.delete_book(UserSettings.user_library_name)
+                    hold_clear = True
+            elif option == 11:
+                if self.is_admin:
+                    print("Nothing here")
+                    hold_clear = True
+                else:
+                    Loans.list_loans()
+                    hold_clear = True
+            elif option == 12:
+                if self.is_admin:
+                    print("Nothing here")
+                    hold_clear = True
+                else:
+                    Loans.loan_book()
+                    hold_clear = True
+            elif option == 13:
+                if self.is_admin:
+                    print("Nothing here")
+                    hold_clear = True
+                else:
+
                     hold_clear = True
             elif option == 0:
                 self.request_exit = 1

@@ -185,6 +185,27 @@ class BookStore:
             print("No results\n")
 
     @staticmethod
+    def search_book_by_name(keyword, table=db_table):
+
+        queried_books = BookStore()
+        search_query = f"""
+            SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE Name LIKE "%{keyword}%";
+        """
+        try:
+            result_list = SqlDB.sql_query_result(search_query, use_sqlite3=UserSettings.use_sqlite3)
+        except ProgrammingError:
+            print(f"Table {table} not available")
+            print()
+            return
+        for entry in result_list:
+            queried_books.entries.append(
+                BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
+        if len(queried_books.entries):
+            return queried_books.entries[0]
+        else:
+            return None
+
+    @staticmethod
     def delete_book(table = db_table):
         if UserSettings.at_cli:
             UserSettings.clear()
@@ -270,8 +291,8 @@ class BookStoreEntry:
 
     def save_to_db(self, table = BookStore.db_table):
         insert_query = f"""
-        INSERT INTO {table} (ID, Name, Author, Quantity, Available)
-        VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
+            INSERT INTO {table} (ID, Name, Author, Quantity, Available)
+            VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
         """
         SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
         print(f"Book added! \"{self.entry.book.name}\" has been saved to database")

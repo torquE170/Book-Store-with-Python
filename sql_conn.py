@@ -185,7 +185,7 @@ class Sqlite3Conn(sqlite3.Connection):
         values = config_object[settings]
         return values
 
-def __del__(self):
+    def __del__(self):
         self.close()
 
 
