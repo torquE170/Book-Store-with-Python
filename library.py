@@ -57,42 +57,6 @@ class LibraryEntry:
         return new_entry
 
 
-class BookStoreEntry:
-
-    def __init__(self, store_entry: LibraryEntry, db_id = None):
-        self.entry = store_entry
-        self.db_id = db_id
-
-    def __repr__(self):
-        typed_out = f"ID: {self.db_id}\n"
-        typed_out += f"{self.entry}"
-        return typed_out
-
-    @staticmethod
-    def get_entry():
-        new_lib_entry = LibraryEntry.get_entry()
-        # next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
-        book_store_entry = BookStoreEntry(new_lib_entry)
-        return book_store_entry
-
-    def save_entry_to_db(self, table = BookStore.db_table):
-        insert_query = f"""
-            INSERT INTO {table} (ID, Name, Author, Quantity, Available)
-            VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
-        """
-        try:
-            SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
-            print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
-            print()
-        except IntegrityError:
-            print("Book already in library. Adding available copies")
-            print()
-            book = BookStore.search_book_by_name(self.entry.book.name, UserSettings.user_library_name)
-            if book is not None:
-                BookStore.add_stock(book, self.entry.quantity, self.entry.available)
-        return self
-
-
 class BookStore:
 
     db_table = "BookStore"
@@ -351,7 +315,7 @@ class BookStore:
             print()
 
     @staticmethod
-    def loaned_one(book : BookStoreEntry):
+    def loaned_one(book):
         query = f"""
             UPDATE {UserSettings.user_library_name} 
             SET Available = {book.entry.available - 1} 
@@ -360,7 +324,7 @@ class BookStore:
         SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
 
     @staticmethod
-    def add_stock(book : BookStoreEntry, quantity : int, available : int):
+    def add_stock(book : LibraryEntry, quantity : int, available : int):
         query = f"""
             UPDATE {UserSettings.user_library_name} 
             SET Quantity = {book.entry.quantity + quantity}, Available = {book.entry.available + available}
@@ -369,7 +333,7 @@ class BookStore:
         SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
 
     @staticmethod
-    def return_one(book : BookStoreEntry):
+    def return_one(book):
         query = f"""
             UPDATE {UserSettings.user_library_name} 
             SET Available = {book.entry.available + 1} 
@@ -394,7 +358,40 @@ class BookStore:
         SqlDB.sql_query(init_query, table, drop, UserSettings.use_sqlite3)
 
 
+class BookStoreEntry:
 
+    def __init__(self, store_entry: LibraryEntry, db_id = None):
+        self.entry = store_entry
+        self.db_id = db_id
+
+    def __repr__(self):
+        typed_out = f"ID: {self.db_id}\n"
+        typed_out += f"{self.entry}"
+        return typed_out
+
+    @staticmethod
+    def get_entry():
+        new_lib_entry = LibraryEntry.get_entry()
+        # next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
+        book_store_entry = BookStoreEntry(new_lib_entry)
+        return book_store_entry
+
+    def save_entry_to_db(self, table = BookStore.db_table):
+        insert_query = f"""
+            INSERT INTO {table} (ID, Name, Author, Quantity, Available)
+            VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
+        """
+        try:
+            SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
+            print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
+            print()
+        except IntegrityError:
+            print("Book already in library. Adding available copies")
+            print()
+            book = BookStore.search_book_by_name(self.entry.book.name, UserSettings.user_library_name)
+            if book is not None:
+                BookStore.add_stock(book, self.entry.quantity, self.entry.available)
+        return self
 
 
 class BookStores:
