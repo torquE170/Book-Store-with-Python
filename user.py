@@ -432,8 +432,8 @@ class User:
                 print(" 9 - Add book")
                 print("10 - Remove book")
                 print("   -")
-                print("11 - List lent books")
-                print("12 - Lend a book")
+                print("11 - List rented books")
+                print("12 - Rent a book")
                 print("13 - Return a book")
             print()
             print("0 - Exit")
@@ -519,7 +519,7 @@ class User:
                     print("Nothing here")
                     hold_clear = True
                 else:
-
+                    Loans.return_book()
                     hold_clear = True
             elif option == 0:
                 self.request_exit = 1
@@ -534,7 +534,7 @@ class User:
             UserSettings.clear()
         UserSettings.user_library_name = input("Library name: ")
         UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
-        BookStores.save_to_db(UserSettings.user_library_name)
+        BookStores.save_library_to_db(UserSettings.user_library_name)
         print()
 
     def log_to_file(self):

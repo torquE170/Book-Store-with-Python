@@ -1,3 +1,6 @@
+import sqlite3
+
+from book import Book
 from library import BookStore, LibraryEntry
 from sql_conn import SqlDB
 from user_settings import UserSettings
@@ -35,7 +38,11 @@ class Loans:
             print(f"Table {table} not available")
             print()
             return
-        column_width = [0, 0, 0, 0, 0]
+        except sqlite3.OperationalError:
+            print(f"Table {table} not available")
+            print()
+            return
+        column_width = [len("ID"), len("Client"), len("Book Name"), len("Book Author"), len("Library Name")]
         for entry in result:
             if len(str(entry[0])) + 2 > column_width[0]:
                 column_width[0] = len(str(entry[0])) + 2
@@ -88,6 +95,7 @@ class Loans:
                     print()
                     loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
                     loan_entry.save_to_db()
+                    BookStore.loaned_one(loan_entry.book)
                     print(f" END ".center(60, "-"))
                 except ProgrammingError:
                     print(f"Tried to make new {table}, and failed")
@@ -95,11 +103,78 @@ class Loans:
                     print()
                     print(f" END ".center(60, "-"))
                     return
+                except sqlite3.OperationalError:
+                    print(f"Tried to make new {table}, and failed")
+                    print("Exiting")
+                    print()
+                    print(f" END ".center(60, "-"))
+                    return
                 return
+            except sqlite3.OperationalError:
+                print(f"Table {table} not available")
+                print()
+                try:
+                    Loans.init_db()
+                    print(f"Created new table {table}")
+                    print()
+                    loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                    loan_entry.save_to_db()
+                    BookStore.loaned_one(loan_entry.book)
+                    print(f" END ".center(60, "-"))
+                except sqlite3.OperationalError:
+                    print(f"Tried to make new {table}, and failed")
+                    print("Exiting")
+                    print()
+                    print(f" END ".center(60, "-"))
+                    return
+                return
+
         else:
             print("No more available copies")
             print()
             return
+
+    @staticmethod
+    def return_book(table = db_table):
+        if UserSettings.at_cli:
+            UserSettings.clear()
+        print(f" Return book ".center(60, "-"))
+        name = input("Client name: ")
+        book_found = False
+        while not book_found:
+            book_name = input("Book name: ")
+            if book_name.strip().upper() == "SKIP":
+                print(f" END ".center(60, "-"))
+                return
+            print()
+            book = BookStore.search_book_by_name(book_name, UserSettings.user_library_name)
+            if book is None:
+                print("Book not found\n")
+            else:
+                book_found = True
+
+        order = Loans.search_order(name, book.entry.book.name, UserSettings.user_library_name)
+
+        BookStore.return_one(book)
+
+        delete_statement = f"""
+            DELETE FROM {Loans.db_table} 
+            WHERE ClientName = \"{order.client_name}\" AND BookName = \"{order.book.book.name}\";
+        """
+        SqlDB.sql_query(delete_statement, Loans.db_table)
+
+        # Add some check to see the success of all the operations
+        print(f"{order.client_name} returned {order.book.book.name}")
+        print()
+
+    @staticmethod
+    def search_order(client_name, book_name, library_name):
+        search_statement = f"""SELECT * FROM {Loans.db_table} 
+            WHERE ClientName = \"{client_name}\" AND BookName = \"{book_name}\" AND LibraryName = \"{library_name}\";  
+        """
+        result = SqlDB.sql_query_result(search_statement, use_sqlite3=UserSettings.use_sqlite3)
+        order = LoansEntry(result[0][0], result[0][1], LibraryEntry(Book(result[0][2], result[0][3])))
+        return order
 
 
 class LoansEntry:
@@ -113,6 +188,7 @@ class LoansEntry:
         typed_out = f"ID: {self.db_id} "
         typed_out += f"Client: {self.client_name}\n"
         typed_out += f"{self.book}"
+        return typed_out
 
     def save_to_db(self, table = Loans.db_table):
         insert_query = f"""

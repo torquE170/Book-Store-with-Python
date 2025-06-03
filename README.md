@@ -26,7 +26,6 @@ and uses "clear" commands for windows and linux
    - modify quantities and available counters 
    - distribute equally books that aren't present elsewhere
    - drop table in the database
-2) Add return a book method
 
 ### Technical information
 1) Used python packages:

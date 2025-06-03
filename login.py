@@ -162,5 +162,5 @@ class Login:
 
 
 UserSettings.set_config()
-BookStores.save_to_db(UserSettings.user_library_name)
+BookStores.save_library_to_db(UserSettings.user_library_name)
 Login.login_form()

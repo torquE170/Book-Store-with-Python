@@ -2,7 +2,7 @@ import os
 import sqlite3
 import mysql.connector
 from configparser import ConfigParser
-from mysql.connector import Error, ProgrammingError, OperationalError
+from mysql.connector import Error, ProgrammingError, OperationalError, IntegrityError
 
 
 class SqlConn(mysql.connector.MySQLConnection):
@@ -24,9 +24,14 @@ class SqlConn(mysql.connector.MySQLConnection):
                 DROP TABLE IF EXISTS {db_table};
                 """)  # Execute a drop command
             conn.commit()  # commit the drop query
-        cursor.execute(db_query)
-        conn.commit()
-        # conn.close()  # close the connection
+        try:
+            cursor.execute(db_query)
+            conn.commit()
+            conn.close()  # close the connection
+        except IntegrityError:
+            conn.close()
+            raise IntegrityError
+
 
     @staticmethod
     def sql_query_result(db_query, print_out=False):
@@ -40,7 +45,7 @@ class SqlConn(mysql.connector.MySQLConnection):
         if print_out:
             for row in rows:
                 print(row)
-        # conn.close()  # close the connection
+        conn.close()  # close the connection
         return rows
 
     @staticmethod

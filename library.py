@@ -1,3 +1,5 @@
+import sqlite3
+
 from book import Book
 from sql_conn import SqlDB
 from user_settings import UserSettings
@@ -33,7 +35,7 @@ class Library:
 
 class LibraryEntry:
 
-    def __init__(self, book: Book, quantity, available = None):
+    def __init__(self, book: Book, quantity = None, available = None):
         self.book = book
         self.quantity = quantity
         if available is None:
@@ -43,7 +45,8 @@ class LibraryEntry:
 
     def __repr__(self):
         typed_out = f"{self.book}\n"
-        typed_out += f"Quantity = {self.quantity}, Available = {self.available}"
+        if self.quantity is not None:
+            typed_out += f"Quantity = {self.quantity}, Available = {self.available}"
         return typed_out
 
     @staticmethod
@@ -77,16 +80,49 @@ class BookStore:
         typed_out += "\n"
         return typed_out
 
-
-    def save_entry(self, new_entry):
-        next_id = SqlDB.get_last_id(UserSettings.user_library_name, UserSettings.use_sqlite3) + 1
-        # self.entries.append(BookStoreEntry(new_entry, next_id))
-        this_entry = BookStoreEntry(new_entry, next_id)
+    @staticmethod
+    def save_entry_to_store(table, new_entry):
         try:
-            saved_entry = this_entry.save_to_db()
-            self.entries.append(saved_entry)
-        except IntegrityError:
-            print(f"Book not added! \"{this_entry.entry.book.name}\" is already in store")
+            new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+            new_entry.save_entry_to_db(table)
+        except ProgrammingError:
+            print(f"Table {table} not available")
+            print()
+            try:
+                BookStore.init_db(table)
+                print(f"Created new table {table}")
+                print()
+                new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                new_entry.save_entry_to_db(table)
+            except ProgrammingError:
+                print(f"Tried to make new {table}, and failed")
+                print("Exiting")
+                print()
+                return
+            except IntegrityError:
+                print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
+                print()
+            return
+        except sqlite3.OperationalError:
+            print(f"Table {table} not available")
+            print()
+            try:
+                BookStore.init_db(table)
+                print(f"Created new table {table}")
+                print()
+                new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                new_entry.save_entry_to_db(table)
+            except sqlite3.OperationalError:
+                print(f"Tried to make new {table}, and failed")
+                print("Exiting")
+                print()
+                return
+            except sqlite3.IntegrityError:
+                print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
+                print()
+            return
+        except sqlite3.IntegrityError:
+            print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
             print()
 
     @staticmethod
@@ -98,7 +134,7 @@ class BookStore:
         new_entry = BookStoreEntry.get_entry()
         try:
             new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-            new_entry.save_to_db(table)
+            new_entry.save_entry_to_db(table)
         except ProgrammingError:
             print(f"Table {table} not available")
             print()
@@ -107,7 +143,7 @@ class BookStore:
                 print(f"Created new table {table}")
                 print()
                 new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-                new_entry.save_to_db(table)
+                new_entry.save_entry_to_db(table)
             except ProgrammingError:
                 print(f"Tried to make new {table}, and failed")
                 print("Exiting")
@@ -117,7 +153,25 @@ class BookStore:
                 print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
                 print()
             return
-        except IntegrityError:
+        except sqlite3.OperationalError:
+            print(f"Table {table} not available")
+            print()
+            try:
+                BookStore.init_db(table)
+                print(f"Created new table {table}")
+                print()
+                new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                new_entry.save_entry_to_db(table)
+            except sqlite3.OperationalError:
+                print(f"Tried to make new {table}, and failed")
+                print("Exiting")
+                print()
+                return
+            except sqlite3.IntegrityError:
+                print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
+                print()
+            return
+        except sqlite3.IntegrityError:
             print(f"Book not added! \"{new_entry.entry.book.name}\" is already in store")
             print()
 
@@ -132,6 +186,10 @@ class BookStore:
         try:
             books_list = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
         except ProgrammingError:
+            print(f"Table {table} not available")
+            print()
+            return
+        except sqlite3.OperationalError:
             print(f"Table {table} not available")
             print()
             return
@@ -186,24 +244,27 @@ class BookStore:
 
     @staticmethod
     def search_book_by_name(keyword, table=db_table):
-
         queried_books = BookStore()
         search_query = f"""
-            SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE Name LIKE "%{keyword}%";
+            SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE Name LIKE \'%{keyword}%\';
         """
         try:
             result_list = SqlDB.sql_query_result(search_query, use_sqlite3=UserSettings.use_sqlite3)
+            for entry in result_list:
+                queried_books.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
+            if len(queried_books.entries):
+                return queried_books.entries[0]
+            else:
+                return None
         except ProgrammingError:
             print(f"Table {table} not available")
             print()
-            return
-        for entry in result_list:
-            queried_books.entries.append(
-                BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
-        if len(queried_books.entries):
-            return queried_books.entries[0]
-        else:
             return None
+        except sqlite3.OperationalError:
+            print(f"Table {table} not available")
+            print()
+            return None
+
 
     @staticmethod
     def delete_book(table = db_table):
@@ -254,11 +315,29 @@ class BookStore:
             print()
 
     @staticmethod
-    def loaned_one(book : LibraryEntry):
+    def loaned_one(book):
         query = f"""
-        UPDATE {UserSettings.user_library_name} 
-        SET Available = {book.entry.available - 1} 
-        WHERE Name = \"{book.entry.book.name}\";
+            UPDATE {UserSettings.user_library_name} 
+            SET Available = {book.entry.available - 1} 
+            WHERE Name = \"{book.entry.book.name}\";
+        """
+        SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
+
+    @staticmethod
+    def add_stock(book : LibraryEntry, quantity : int, available : int):
+        query = f"""
+            UPDATE {UserSettings.user_library_name} 
+            SET Quantity = {book.entry.quantity + quantity}, Available = {book.entry.available + available}
+            WHERE Name = \"{book.entry.book.name}\";
+        """
+        SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
+
+    @staticmethod
+    def return_one(book):
+        query = f"""
+            UPDATE {UserSettings.user_library_name} 
+            SET Available = {book.entry.available + 1} 
+            WHERE Name = \"{book.entry.book.name}\";
         """
         SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
 
@@ -297,18 +376,26 @@ class BookStoreEntry:
         book_store_entry = BookStoreEntry(new_lib_entry)
         return book_store_entry
 
-    def save_to_db(self, table = BookStore.db_table):
+    def save_entry_to_db(self, table = BookStore.db_table):
         insert_query = f"""
             INSERT INTO {table} (ID, Name, Author, Quantity, Available)
             VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
         """
-        SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
-        print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
-        print()
+        try:
+            SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
+            print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
+            print()
+        except IntegrityError:
+            print("Book already in library. Adding available copies")
+            print()
+            book = BookStore.search_book_by_name(self.entry.book.name, UserSettings.user_library_name)
+            if book is not None:
+                BookStore.add_stock(book, self.entry.quantity, self.entry.available)
         return self
 
 
 class BookStores:
+    """object for listing book stores"""
 
     db_table = "Libraries"
     def __init__(self, entries = None):
@@ -343,12 +430,16 @@ class BookStores:
         SqlDB.sql_query(init_query, table, drop, UserSettings.use_sqlite3)
 
     @staticmethod
-    def save_to_db(library_name, table = db_table):
+    def save_library_to_db(library_name, table = db_table):
         try:
             next_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
         except ProgrammingError:
             BookStores.init_db()
             next_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+        except sqlite3.OperationalError:
+            BookStores.init_db()
+            next_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+
         insert_query = f"""
             INSERT INTO {table} (ID, Library)
             VALUES ({next_id}, "{library_name}");
@@ -356,6 +447,10 @@ class BookStores:
         try:
             SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
         except IntegrityError:
+            print(f"Library {library_name} was already saved to the list.")
+            print()
+            return
+        except sqlite3.IntegrityError:
             print(f"Library {library_name} was already saved to the list.")
             print()
             return
@@ -373,6 +468,10 @@ class BookStores:
         try:
             libraries_list = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
         except ProgrammingError:
+            print(f"Table {table} not available")
+            print()
+            return
+        except sqlite3.OperationalError:
             print(f"Table {table} not available")
             print()
             return
@@ -451,6 +550,7 @@ class BookStores:
                     UserSettings.user_library_name = result[i + 1][1]
             if delete_by == "Library" and value == result[len(result) - 1][1] or delete_by == "ID" and name == result[len(result) - 1][1]:
                 UserSettings.user_library_name = result[len(result) - 2][1]
+            UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
 
         delete_statement = f"""
             DELETE FROM {table} WHERE {delete_by}={value};
