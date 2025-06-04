@@ -34,11 +34,7 @@ class Loans:
         """
         try:
             result = SqlDB.sql_query_result(list_query, use_sqlite3=UserSettings.use_sqlite3)
-        except ProgrammingError:
-            print(f"Table {table} not available")
-            print()
-            return
-        except sqlite3.OperationalError:
+        except (ProgrammingError, sqlite3.OperationalError):
             print(f"Table {table} not available")
             print()
             return
@@ -86,7 +82,7 @@ class Loans:
                 loan_entry.save_to_db()
                 print(f" END ".center(60, "-"))
                 BookStore.loaned_one(loan_entry.book)
-            except ProgrammingError:
+            except (ProgrammingError, sqlite3.OperationalError):
                 print(f"Table {table} not available")
                 print()
                 try:
@@ -97,31 +93,7 @@ class Loans:
                     loan_entry.save_to_db()
                     BookStore.loaned_one(loan_entry.book)
                     print(f" END ".center(60, "-"))
-                except ProgrammingError:
-                    print(f"Tried to make new {table}, and failed")
-                    print("Exiting")
-                    print()
-                    print(f" END ".center(60, "-"))
-                    return
-                except sqlite3.OperationalError:
-                    print(f"Tried to make new {table}, and failed")
-                    print("Exiting")
-                    print()
-                    print(f" END ".center(60, "-"))
-                    return
-                return
-            except sqlite3.OperationalError:
-                print(f"Table {table} not available")
-                print()
-                try:
-                    Loans.init_db()
-                    print(f"Created new table {table}")
-                    print()
-                    loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-                    loan_entry.save_to_db()
-                    BookStore.loaned_one(loan_entry.book)
-                    print(f" END ".center(60, "-"))
-                except sqlite3.OperationalError:
+                except (ProgrammingError, sqlite3.OperationalError):
                     print(f"Tried to make new {table}, and failed")
                     print("Exiting")
                     print()

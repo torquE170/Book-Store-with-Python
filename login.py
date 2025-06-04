@@ -117,9 +117,7 @@ class Login:
             select_query = f"""SELECT Username, passwordHash, isActive, isAdmin FROM {User.db_table};"""
             try:
                 result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
-            except ProgrammingError:
-                result = User.init_db(User.db_table, True)
-            except sqlite3.OperationalError:
+            except (ProgrammingError, sqlite3.OperationalError):
                 result = User.init_db(User.db_table, True)
             if result is not None:
                 for result_user in result:

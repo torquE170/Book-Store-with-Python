@@ -2,6 +2,7 @@ import os
 import sqlite3
 import mysql.connector
 from configparser import ConfigParser
+from sqlite3 import IntegrityError as sqlite3_IntegrityError
 from mysql.connector import Error, ProgrammingError, OperationalError, IntegrityError
 
 
@@ -120,9 +121,13 @@ class Sqlite3Conn(sqlite3.Connection):
                 DROP TABLE IF EXISTS {db_table};
                 """)  # Execute a drop command
             conn.commit()  # commit the drop query
-        cursor.execute(db_query)
-        conn.commit()
-        # conn.close()  # close the connection
+        try:
+            cursor.execute(db_query)
+            conn.commit()
+            conn.close()  # close the connection
+        except sqlite3_IntegrityError:
+            conn.close()
+            raise sqlite3_IntegrityError
 
     @staticmethod
     def get_last_id(db_table):
