@@ -1,5 +1,4 @@
 import sqlite3
-
 from book import Book
 from sql_conn import SqlDB
 from user_settings import UserSettings

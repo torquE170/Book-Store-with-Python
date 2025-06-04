@@ -1,5 +1,4 @@
 import sqlite3
-
 from book import Book
 from library import BookStore, LibraryEntry
 from sql_conn import SqlDB

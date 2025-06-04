@@ -1,7 +1,6 @@
 import uuid
 import bcrypt
 import logging
-
 from loans import Loans
 from sql_conn import SqlDB
 from getpass import getpass
