@@ -11,6 +11,11 @@ class UserSettings:
 
     @staticmethod
     def set_config():
+        """
+        Reads config.ini file for relevant user settings and loads them into the program.
+        Executing stop if the config file isn't formated or has invalid values
+        If the file is missing a default config file will be created
+        """
         try:
             user_settings = UserSettings.read_config("config.ini", "USER-SETTINGS")
             UserSettings.at_cli = int(user_settings["at_cli"])
@@ -25,10 +30,21 @@ class UserSettings:
             exit()
         except FileNotFoundError:
             print("Missing config file")
+            print()
+            UserSettings.init_cfg_file()
+            print("Default config file created, edit it with relevant information")
+            print("Exiting")
+            print()
             exit()
 
     @staticmethod
     def read_config(file_name, settings):
+        """
+        Uses ConfigParser to read a file
+        :param file_name:
+        :param settings:
+        :return: Section object with key 'settings' from the whole ConfigParser object
+        """
         # read the file
         config_object = ConfigParser()
         if not os.path.exists(file_name):
@@ -41,6 +57,13 @@ class UserSettings:
 
     @staticmethod
     def edit_config(file_name, settings, key, value):
+        """
+        Change a certain value in the config file, using ConfigParser
+        :param file_name:
+        :param settings:
+        :param key:
+        :param value:
+        """
         # read the file
         config_object = ConfigParser()
         if not os.path.exists(file_name):
@@ -55,7 +78,41 @@ class UserSettings:
             config_object.write(conf)
 
     @staticmethod
+    def init_cfg_file():
+        """
+        Creates a config file with default values, and highest compatibility, user needs to change them in
+        order to use a standalone mysql server or run app at terminal with getpass() for password entering
+        """
+        # Get the configparser object
+        config_object = ConfigParser()
+
+        # Config data
+        config_object["USER-SETTINGS"] = {
+            "at_cli": "0",
+            "use_sqlite3": "1"
+        }
+        config_object["USER-LIBRARY"] = {
+            "name": "BookStore"
+        }
+        config_object["DB-CONNECTION"] = {
+            "host": "mysql-server-ip",
+            "port": "3306",
+            "user": "python-user",
+            "password": "python-password",
+            "database": "python"
+        }
+
+        # Write the above sections to config.ini file
+        with open('config.ini', 'w') as conf:
+            config_object.write(conf)
+
+    @staticmethod
     def read_menu_option(prompt):
+        """
+        Makes sure user enters an int
+        :param prompt:
+        :return: the number user entered or -1 if user entered anything else
+        """
         while True:
             try:
                 number = int(input(prompt))
@@ -65,6 +122,9 @@ class UserSettings:
 
     @staticmethod
     def clear():
+        """
+        calls clear for windows or linux
+        """
         if "win" in sys.platform:
             os.system("cls")
         elif "linux" in sys.platform:
