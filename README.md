@@ -26,6 +26,9 @@ and uses "clear" commands for windows and linux
    - modify quantities and available counters 
    - distribute equally books that aren't present elsewhere
    - drop table in the database
+2) Make user database initialize before first time log-in, because as it is now 
+the first log-in will trigger the init_db() method and fail the first log-in
+3) Call method to create default config.ini file if not found (useful for first time use)
 
 ### Technical information
 1) Used python packages:
