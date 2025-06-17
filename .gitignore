@@ -1,6 +1,12 @@
 # ignore tests
 test*.*
 
+# ignore .bak files
+*.bak
+
+# ignore .log files
+*.log
+
 # ignore other files or folders
 __pycache__/
 .idea/
