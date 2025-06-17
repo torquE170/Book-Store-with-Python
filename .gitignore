@@ -7,6 +7,9 @@ test*.*
 # ignore .log files
 *.log
 
+# ignore .ini files
+*.ini
+
 # ignore other files or folders
 __pycache__/
 .idea/
