@@ -1,6 +1,9 @@
 
 
 class Book:
+    """
+    Information about a book Name, Author, and optional, Publisher and Genre
+    """
 
     def __init__(self, name = None, author = None, publisher = None, genre = None):
         self.name = name
@@ -19,6 +22,10 @@ class Book:
 
     @staticmethod
     def get_book():
+        """
+        Get from the keyboard the basic form of Book object, just Name and Author
+        :return:
+        """
         new_book = Book()
         new_book.name = input("name: ")
         new_book.author = input("author: ")

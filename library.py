@@ -6,6 +6,9 @@ from mysql.connector import IntegrityError, ProgrammingError
 
 
 class Library:
+    """
+    Is a list of LibraryEntries
+    """
 
     def __init__(self, entries = None):
         if entries is None:
@@ -33,6 +36,9 @@ class Library:
 
 
 class LibraryEntry:
+    """
+    Is a Book with quantity and availability
+    """
 
     def __init__(self, book: Book, quantity = None, available = None):
         self.book = book
@@ -50,6 +56,10 @@ class LibraryEntry:
 
     @staticmethod
     def get_entry():
+        """
+        Adds to Book.get_book() and furthermore gets Quantity as well
+        :return:
+        """
         new_book = Book.get_book()
         quantity = int(input("Quantity: "))
         new_entry = LibraryEntry(new_book, quantity)
@@ -57,6 +67,9 @@ class LibraryEntry:
 
 
 class BookStore:
+    """
+    Is a list if BookStoreEntries
+    """
 
     db_table = "BookStore"
     def __init__(self, entries = None):
@@ -308,6 +321,9 @@ class BookStore:
 
 
 class BookStoreEntry:
+    """
+    Is a LibraryEntry with an ID, useful for storing in database
+    """
 
     def __init__(self, store_entry: LibraryEntry, db_id = None):
         self.entry = store_entry
@@ -344,7 +360,9 @@ class BookStoreEntry:
 
 
 class BookStores:
-    """object for listing book stores"""
+    """
+    A list of BookStoresEntry
+    """
 
     db_table = "Libraries"
     def __init__(self, entries = None):
@@ -369,6 +387,11 @@ class BookStores:
 
     @staticmethod
     def init_db(table = db_table, drop = False):
+        """
+        Called when there is no Libraries table to send a CREATE TABLE
+        :param table:
+        :param drop:
+        """
         init_query = f"""
             CREATE TABLE {table} (
             ID INT NOT NULL,

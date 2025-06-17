@@ -8,10 +8,17 @@ from mysql.connector import ProgrammingError
 
 
 class Login:
+    """
+    Collection of login useful methods
+    """
 
-    # noinspection PyInconsistentReturns
     @staticmethod
     def failed_login_menu():
+        """
+        The menu a user sees if it fails to log-in 3 times in a row
+        :return: A user object that either has reset his password or was
+        newly created
+        """
         option = -1
         while option != 0:
             print("1 - Register a user")
@@ -42,9 +49,13 @@ class Login:
             elif option == 0:
                 print("Good bye")
                 print()
+        return None
 
     @staticmethod
     def login_form():
+        """
+        The login menu any user see when the app starts
+        """
         user = Login.login_user()
         if user is not None:
             user.log_to_file()
@@ -96,6 +107,13 @@ class Login:
 
     @staticmethod
     def login_user(starting_tries = 0, starting_clear = False):
+        """
+        Method called to present a login form,
+        keeps track of login attempts and checks entered credentials
+        :param starting_tries:
+        :param starting_clear:
+        :return: User object of logged-in user or None in case of failed login
+        """
         hold_clear = starting_clear
         tries = starting_tries
         while tries < 3:
@@ -118,7 +136,8 @@ class Login:
             try:
                 result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             except (ProgrammingError, sqlite3.OperationalError):
-                result = User.init_db(User.db_table, True)
+                User.init_db(User.db_table, True)
+                result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             if result is not None:
                 for result_user in result:
                     if username == result_user[0]:

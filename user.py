@@ -9,6 +9,9 @@ from library import BookStore, BookStores
 
 
 class User:
+    """
+    The logic behind the users of the app
+    """
     db_table = "Users"
     def __init__(self, username, full_name = None, is_admin = 0, is_active = 0, has_password = 0,
                  request_logout = 0, request_exit = 0, correct_password = 0, password_tries = 0):
@@ -24,6 +27,9 @@ class User:
         self.password_tries = password_tries
 
     def user_setup(self):
+        """
+        When a user is created, he will go through a first time setup, and get activated
+        """
         if not self.is_active:
             if self.is_admin:
                 print("As a security practice it is recommended that\n"
@@ -50,6 +56,9 @@ class User:
 
     @staticmethod
     def list_users():
+        """
+        Queries the database for all available users and their details
+        """
         list_query = f"""
         SELECT ID, Username, isAdmin, isActive FROM {User.db_table};
         """
@@ -62,12 +71,22 @@ class User:
         print()
 
     def promote_user(self):
+        """
+        Sets the admin value of a user to 1
+        """
         self.set_admin(1)
 
     def demote_user(self):
+        """
+        Sets the admin value of a user to 0
+        """
         self.set_admin(0)
 
     def set_admin(self, state):
+        """
+        Does a UPDATE query on the database to set the admin state of one user
+        :param state:
+        """
         update_query = f"""UPDATE {User.db_table}
         SET isAdmin = {state}
         WHERE Username = "{self.username}";
@@ -87,6 +106,9 @@ class User:
 
     @staticmethod
     def promote_user_by_name():
+        """
+        Form for admin to promote a user
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         valid = False
@@ -108,6 +130,9 @@ class User:
 
     @staticmethod
     def demote_user_by_name():
+        """
+        Form for admin to demote a user
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         valid = False
@@ -187,6 +212,9 @@ class User:
         reset_user.set_active(state)
 
     def delete_user(self):
+        """
+        Deletes a user
+        """
         delete_query = f"""DELETE FROM {User.db_table}
         WHERE Username = "{self.username}";
         """
@@ -201,6 +229,9 @@ class User:
 
     @staticmethod
     def delete_user_by_name():
+        """
+        Form for an admin to delete a user
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         valid = False
@@ -245,6 +276,10 @@ class User:
                 delete_user.delete_user()
 
     def set_username(self):
+        """
+        Form to update the username for a user
+        Used only once when admin is created
+        """
         username = input("Username: ")
         update_query = f"""UPDATE {User.db_table}
         SET Username = "{username}"
@@ -254,6 +289,9 @@ class User:
         self.username = username
 
     def set_password(self):
+        """
+        Form to set a password with checks to make sure you typed correctly
+        """
         if UserSettings.at_cli:
             password1 = "password1"
             password2 = "password2"
@@ -289,6 +327,9 @@ class User:
         print()
 
     def set_full_name(self):
+        """
+        Form to change the display name of a user
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         print(" Set user fullname ".center(60, "-"))
@@ -304,6 +345,9 @@ class User:
         print()
 
     def details(self):
+        """
+        Method that prints relevant information of current user
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         print(f"User ", end="")
@@ -315,6 +359,11 @@ class User:
 
     @staticmethod
     def reset_password(username):
+        """
+        Reset password form for user with checks to make sure you typed correctly
+        :param username:
+        :return: the User object
+        """
         print(f"Reset password for {username}")
         if UserSettings.at_cli:
             password1 = "password1"
@@ -360,6 +409,11 @@ class User:
 
     @staticmethod
     def register_form(active = 1):
+        """
+        Form for admin to add a new user
+        :param active:
+        :return: a newly created user
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         print(" Register a user ".center(60, "-"))
@@ -386,6 +440,11 @@ class User:
 
     @staticmethod
     def add_new_user(username):
+        """
+        Method that gets last ID from user database and adds that user to the table
+        :param username:
+        :return: the added user
+        """
         next_id = SqlDB.get_last_id(User.db_table, UserSettings.use_sqlite3) + 1
         insert_query = f"""
         INSERT INTO {User.db_table} (ID, Username, isAdmin, isActive)
@@ -398,10 +457,18 @@ class User:
 
     @staticmethod
     def register_user():
+        """
+        Method that is part of the menu when you fail to log-in 3 times in a row
+        Method registers a user
+        """
         user = User.register_form()
         return user
 
     def logged_user_menu(self):
+        """
+        A logged-in user is presented with this menu, and shows appropriate options
+        for either user or admin
+        """
         hold_clear = False
         option = -1
         while option != 0 or option != 1:
@@ -529,6 +596,9 @@ class User:
 
     @staticmethod
     def set_library():
+        """
+        Allows user to change or set a new in-use library
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         UserSettings.user_library_name = input("Library name: ")
@@ -537,6 +607,9 @@ class User:
         print()
 
     def log_to_file(self):
+        """
+        Saves log-in and log-out of users to Users.log file
+        """
         logging.basicConfig(filename="Users.log",
                             filemode='a',
                             format='%(asctime)s,%(msecs)03d %(name)s %(levelname)s %(message)s',
@@ -551,6 +624,12 @@ class User:
 
     @staticmethod
     def init_db(table, drop = False):
+        """
+        At first time bootup this method is called to create a table for users to be stored
+        Creating a default admin user with 'adminadmin' as password
+        :param table:
+        :param drop:
+        """
         query_init = f'''
         CREATE TABLE {table} (
         ID INT NOT NULL,

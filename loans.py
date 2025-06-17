@@ -7,10 +7,18 @@ from mysql.connector import ProgrammingError
 
 
 class Loans:
+    """
+    Collection of loans related methods
+    """
 
     db_table = "Loans"
     @staticmethod
     def init_db(table = db_table, drop = False):
+        """
+        Creates a new Loans table to store all loans information
+        :param table:
+        :param drop:
+        """
         init_query = f'''
             CREATE TABLE {table} (
             ID INT NOT NULL,
@@ -25,6 +33,11 @@ class Loans:
 
     @staticmethod
     def list_loans(table = db_table):
+        """
+        Queries the database for all loans
+        :param table:
+        :return:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
 
@@ -57,6 +70,10 @@ class Loans:
 
     @staticmethod
     def loan_book(table = db_table):
+        """
+        Form for a user to loan a book
+        :param table:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         print(f" Rent book ".center(60, "-"))
@@ -107,6 +124,10 @@ class Loans:
 
     @staticmethod
     def return_book(table = db_table):
+        """
+        Form for a user to recieve a loaned book
+        :param table:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         print(f" Return book ".center(60, "-"))
@@ -140,6 +161,13 @@ class Loans:
 
     @staticmethod
     def search_order(client_name, book_name, library_name):
+        """
+        Search the database for a specific loaned book
+        :param client_name:
+        :param book_name:
+        :param library_name:
+        :return: a LoansEntry object
+        """
         search_statement = f"""SELECT * FROM {Loans.db_table} 
             WHERE ClientName = \"{client_name}\" AND BookName = \"{book_name}\" AND LibraryName = \"{library_name}\";  
         """
@@ -149,6 +177,9 @@ class Loans:
 
 
 class LoansEntry:
+    """
+    A singular loan entry (a row in the database), containing all information about a loaned book
+    """
 
     def __init__(self, db_id = 0, client_name = "", book : LibraryEntry = None):
         self.db_id = db_id
@@ -162,6 +193,11 @@ class LoansEntry:
         return typed_out
 
     def save_to_db(self, table = Loans.db_table):
+        """
+        Save a singular loan in the database
+        :param table:
+        :return: a LoansEntry object to be used in the context of saving an entry
+        """
         insert_query = f"""
             INSERT INTO {table} (ID, ClientName, BookName, BookAuthor, LibraryName)
             VALUES ({self.db_id}, "{self.client_name}", "{self.book.entry.book.name}", "{self.book.entry.book.author}", "{UserSettings.user_library_name}");
