@@ -30,6 +30,10 @@ class Library:
         return typed_out
 
     def add_entry(self, new_book):
+        """
+        Asks user for a quantity, then appends the new book to the entries list
+        :param new_book:
+        """
         quantity = int(input("quantity: "))
         new_entry = LibraryEntry(new_book, quantity)
         self.entries.append(new_entry)
@@ -94,6 +98,11 @@ class BookStore:
 
     @staticmethod
     def save_entry_to_store(table, new_entry):
+        """
+        Add to database a book store entry object
+        :param table:
+        :param new_entry:
+        """
         try:
             new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
             new_entry.save_entry_to_db(table)
@@ -118,7 +127,10 @@ class BookStore:
 
     @staticmethod
     def add_entry(table = db_table):
-        """Use for entering a book from keyboard and saving it to database"""
+        """
+        Add a book from keyboard and save it to database
+        :param table:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         print(f" Add book ".center(60, "-"))
@@ -147,6 +159,10 @@ class BookStore:
 
     @staticmethod
     def list_entries(table = db_table):
+        """
+        List all library entries from a specific table
+        :param table:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         book_store = BookStore()
@@ -165,6 +181,11 @@ class BookStore:
 
     @staticmethod
     def search_book(table = db_table):
+        """
+        Fuzzy search a library table by either book name or author
+        Prints the results
+        :param table:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
 
@@ -210,6 +231,12 @@ class BookStore:
 
     @staticmethod
     def search_book_by_name(keyword, table=db_table):
+        """
+        Fuzzy search a library table by name
+        :param keyword:
+        :param table:
+        :return: A single book store entry object
+        """
         queried_books = BookStore()
         search_query = f"""
             SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE Name LIKE \'%{keyword}%\';
@@ -230,6 +257,10 @@ class BookStore:
 
     @staticmethod
     def delete_book(table = db_table):
+        """
+        Deletes a book from database by either ID or Name
+        :param table:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
 
@@ -278,6 +309,10 @@ class BookStore:
 
     @staticmethod
     def loaned_one(book):
+        """
+        When loaning a book this will decrement the available books in the database table
+        :param book:
+        """
         query = f"""
             UPDATE {UserSettings.user_library_name} 
             SET Available = {book.entry.available - 1} 
@@ -287,6 +322,13 @@ class BookStore:
 
     @staticmethod
     def add_stock(book : LibraryEntry, quantity : int, available : int):
+        """
+        When trying to add a book that already exists, this method will be called and will
+        increment the quantity and availability of that book
+        :param book:
+        :param quantity:
+        :param available:
+        """
         query = f"""
             UPDATE {UserSettings.user_library_name} 
             SET Quantity = {book.entry.quantity + quantity}, Available = {book.entry.available + available}
@@ -296,6 +338,10 @@ class BookStore:
 
     @staticmethod
     def return_one(book):
+        """
+        When a client returns a book this will increment the available books to reflect the action
+        :param book:
+        """
         query = f"""
             UPDATE {UserSettings.user_library_name} 
             SET Available = {book.entry.available + 1} 
@@ -305,6 +351,11 @@ class BookStore:
 
     @staticmethod
     def init_db(table, drop = False):
+        """
+        Will initialize a table for storing books
+        :param table: will be the library name
+        :param drop:
+        """
         init_query = f'''
             CREATE TABLE {table} (
             ID INT NOT NULL,
@@ -336,12 +387,22 @@ class BookStoreEntry:
 
     @staticmethod
     def get_entry():
+        """
+        Uses LibraryEntry.get_entry() to gather from user information then returns a object
+        :return: a book store entry object
+        """
         new_lib_entry = LibraryEntry.get_entry()
         # next_id = SqlDB.get_last_id(BookStore.db_table, UserSettings.use_sqlite3) + 1
         book_store_entry = BookStoreEntry(new_lib_entry)
         return book_store_entry
 
     def save_entry_to_db(self, table = BookStore.db_table):
+        """
+        Saves the object that is called on, to database as a book store entry
+        If the book is already in the table, it will increment quantity and availability
+        :param table:
+        :return: self
+        """
         insert_query = f"""
             INSERT INTO {table} (ID, Name, Author, Quantity, Available)
             VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
@@ -403,6 +464,11 @@ class BookStores:
 
     @staticmethod
     def save_library_to_db(library_name, table = db_table):
+        """
+        Saves a library name to the Library table
+        :param library_name:
+        :param table:
+        """
         try:
             next_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
         except (ProgrammingError, sqlite3.OperationalError):
@@ -424,6 +490,10 @@ class BookStores:
 
     @staticmethod
     def list_libraries(table = db_table):
+        """
+        Prints all the available libraries
+        :param table:
+        """
         if UserSettings.at_cli:
             UserSettings.clear()
         stores_list = BookStores()
@@ -443,6 +513,12 @@ class BookStores:
 
     @staticmethod
     def del_library(table = db_table):
+        """
+        Deletes a library from the Library table
+        :param table:
+        """
+        # add functionality, distribute books from that library to all other libraries
+        # then drop the library table
         if UserSettings.at_cli:
             UserSettings.clear()
 
