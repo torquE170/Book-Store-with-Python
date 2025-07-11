@@ -1,4 +1,4 @@
-# EJ-ITFactory-Python-Project
+# Book-Store-with-Python
 
 ###### A CLI experience with login and user management for keeping records of available and lent books to clients
 ### As a logged-in administrator you can:
