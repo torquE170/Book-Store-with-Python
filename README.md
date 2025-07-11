@@ -30,8 +30,8 @@ and uses `clear` commands for windows and linux
 ### Technical information
 #### 1) Used python packages:
    - pip v25.1.1
-   - bcrypt v4.3.0 - for hashing and checking clear text password against hash
-   - mysql-connector-python v9.3.0 - for connecting to a standalone mysql server
+   - bcrypt v4.3.0 `pip install bcrypt` - for hashing and checking clear text password against hash
+   - mysql-connector-python v9.3.0 `pip install mysql-connector-python` - for connecting to a standalone mysql server
    - ConfigParser (default Python library) - for parsing a `.ini` file for some user set config options
    - getpass (default Python library) - `getpass()` for terminal, shoulder surfing safe password entry
    - uuid (default Python library) - for generating a unique session ID for each user once they log in
