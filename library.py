@@ -583,9 +583,9 @@ class BookStores:
             UserSettings.user_library_name = "No libraries available"
         else:
             for i in range(len(result) - 1):
-                if delete_by == "Library" and value == result[i][1] or delete_by == "ID" and name == result[i][1]:
+                if delete_by == "Library" and value.strip("\"") == result[i][1] or delete_by == "ID" and name == result[i][1]:
                     UserSettings.user_library_name = result[i + 1][1]
-            if delete_by == "Library" and value == result[len(result) - 1][1] or delete_by == "ID" and name == result[len(result) - 1][1]:
+            if delete_by == "Library" and value.strip("\"") == result[len(result) - 1][1] or delete_by == "ID" and name == result[len(result) - 1][1]:
                 UserSettings.user_library_name = result[len(result) - 2][1]
             UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
 
@@ -599,8 +599,12 @@ class BookStores:
             WHERE {delete_by} = {value};
         """
         result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+        if delete_by == "Library":
+            conclusion_word = "name"
+        else:
+            conclusion_word = delete_by
         if len(result) == 0:
-            print(f"Library with {delete_by}: {value} has been deleted")
+            print(f"Library identified by {conclusion_word}: {value} has been deleted")
             print()
 
 
