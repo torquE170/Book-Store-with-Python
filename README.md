@@ -39,9 +39,9 @@ and uses `clear` commands for windows and linux
    - sys, os (default Python library) - for clearing the screen on windows and linux systems when running in terminal
  
 ## First time use instructions
-- Start the program at terminal by running `py book_store.py`
-- Then look for config.ini and modify `at_cli = 0` to `at_cli = 1` so the terminal clears and hides passwords
-- First time you start the program, it will generate a new database (mySQL/sqlite3 - user choice)
+- Start the program at terminal by running `py book_store.py` so it generates the required files, it will exit automatically
+- Look for config.ini and modify `at_cli = 0` to `at_cli = 1` so the terminal clears and hides passwords, start the program again
+- First time you start the program, it will generate a new database (mySQL/sqlite3 - user choice in `config.ini` look for [USER-LIBRARY] with key `name = `)
 - It will create a new admin user with admin privileges
 - You will have to log in with user: `admin` and password: `adminadmin`
 - You will be prompted to change them both
