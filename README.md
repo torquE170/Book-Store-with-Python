@@ -28,7 +28,7 @@ and uses `clear` commands for windows and linux
    - drop table in the database
 
 ### Technical information
-1) Used python packages:
+#### 1) Used python packages:
    - pip v25.1.1
    - bcrypt v4.3.0 - for hashing and checking clear text password against hash
    - mysql-connector-python v9.3.0 - for connecting to a standalone mysql server
@@ -37,11 +37,19 @@ and uses `clear` commands for windows and linux
    - uuid (default Python library) - for generating a unique session ID for each user once they log in
    - sqlite3 (default Python library) - for using a `.sqlite3` database file instead of a mysql server in case that requirement isn't met
    - sys, os (default Python library) - for clearing the screen on windows and linux systems when running in terminal
+#### 2) Requirements:
+   - have python installed, you can check to see if it's installed by typing `py --version` in terminal
+   - have set up a standalone mysql server with `user = python-user`, `password = python-password` 
+     and `database = python` which would be the database name or schema, 
+     highly recommended to set up a different password
  
 ## First time use instructions
 - Start the program at terminal by running `py book_store.py` so it generates the required files, it will exit automatically
-- Look for config.ini and modify `at_cli = 0` to `at_cli = 1` so the terminal clears and hides passwords, start the program again
-- First time you start the program, it will generate a new database (mySQL/sqlite3 - user choice in `config.ini` look for [USER-LIBRARY] with key `name = `)
+- Look for `config.ini` and modify `at_cli = 0` to `at_cli = 1` so the terminal clears and hides passwords, start the program again
+- If the sqlite3 db is in use, under `[DB-CONNECTION]` only the `database` key is used, 
+the others can have random values or miss entirely
+- First time you start the program, it will generate a new database (mySQL/sqlite3 - 
+user choice in `config.ini` look for `[USER-LIBRARY]` with key `name = BookStore`)
 - It will create a new admin user with admin privileges
 - You will have to log in with user: `admin` and password: `adminadmin`
 - You will be prompted to change them both
