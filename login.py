@@ -177,7 +177,13 @@ class Login:
             tries += 1
         return None
 
-
-UserSettings.set_config()
-BookStores.save_library_to_db(UserSettings.user_library_name)
-Login.login_form()
+    @staticmethod
+    def start():
+        """
+        Calls method to read config.ini file
+        Calls method to save the library name to database in case it wasn't
+        Calls method to log a user in
+        """
+        UserSettings.set_config()
+        BookStores.save_library_to_db(UserSettings.user_library_name)
+        Login.login_form()
