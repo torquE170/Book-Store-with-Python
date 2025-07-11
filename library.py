@@ -296,7 +296,12 @@ class BookStore:
         delete_statement = f"""
             DELETE FROM {table} WHERE {delete_by}={value};
         """
-        SqlDB.sql_query(delete_statement, table, use_sqlite3=UserSettings.use_sqlite3)
+        try:
+            SqlDB.sql_query(delete_statement, table, use_sqlite3=UserSettings.use_sqlite3)
+        except (ProgrammingError, sqlite3.OperationalError):
+            print(f"Table {table} not available")
+            print()
+            return
         print()
         select_query = f"""
             SELECT ID, Name FROM {table}
@@ -575,12 +580,15 @@ class BookStores:
                 print()
                 return
 
+        # Distribute the books to the rest of the libraries
+
+        # Change the current library to the next one or previous if last
         select_query = f"""
             SELECT * FROM {table};
         """
         result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
         if len(result) < 1:
-            UserSettings.user_library_name = "No libraries available"
+            UserSettings.user_library_name = "n/a"
         else:
             for i in range(len(result) - 1):
                 if delete_by == "Library" and value.strip("\"") == result[i][1] or delete_by == "ID" and name == result[i][1]:
@@ -589,6 +597,7 @@ class BookStores:
                 UserSettings.user_library_name = result[len(result) - 2][1]
             UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
 
+        # Delete the library from the library list
         delete_statement = f"""
             DELETE FROM {table} WHERE {delete_by}={value};
         """

@@ -145,7 +145,12 @@ class Loans:
             else:
                 book_found = True
 
-        order = Loans.search_order(name, book.entry.book.name, UserSettings.user_library_name)
+        try:
+            order = Loans.search_order(name, book.entry.book.name, UserSettings.user_library_name)
+        except (ProgrammingError, sqlite3.OperationalError):
+            print(f"Table {table} not available")
+            print()
+            return
 
         BookStore.return_one(book)
 
