@@ -125,7 +125,7 @@ class Loans:
     @staticmethod
     def return_book(table = db_table):
         """
-        Form for a user to recieve a loaned book
+        Form for a user to receive a loaned book
         :param table:
         """
         if UserSettings.at_cli:
