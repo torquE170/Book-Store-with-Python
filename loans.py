@@ -158,7 +158,7 @@ class Loans:
             DELETE FROM {Loans.db_table} 
             WHERE ClientName = \"{order.client_name}\" AND BookName = \"{order.book.book.name}\";
         """
-        SqlDB.sql_query(delete_statement, Loans.db_table)
+        SqlDB.sql_query(delete_statement, Loans.db_table, use_sqlite3=UserSettings.use_sqlite3)
 
         # Add some check to see the success of all the operations
         print(f"{order.client_name} returned {order.book.book.name}")
