@@ -388,7 +388,7 @@ class BookStoreEntry:
     @staticmethod
     def get_entry():
         """
-        Uses LibraryEntry.get_entry() to gather from user information then returns a object
+        Uses LibraryEntry.get_entry() to gather from user information then returns an object
         :return: a book store entry object
         """
         new_lib_entry = LibraryEntry.get_entry()
@@ -558,7 +558,7 @@ class BookStores:
         result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
         name = ""
         if delete_by == "ID":
-            name = input("Confirm by entring library name: ")
+            name = input("Confirm by entering library name: ")
             if result[0][1] == name:
                 print("Confirmed")
             else:
