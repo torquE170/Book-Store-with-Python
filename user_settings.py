@@ -8,6 +8,7 @@ class UserSettings:
     at_cli = 0  # toggle to 1 to use getpass when at cli for password entry
     use_sqlite3 = 0  # toggle to 1 to use a local sqlite3 file as a database
     user_library_name = ""  # set name of the in use book library
+    loans_table_name = ""  # set name of the in use loans table
 
     @staticmethod
     def set_config():
@@ -21,7 +22,8 @@ class UserSettings:
             UserSettings.at_cli = int(user_settings["at_cli"])
             UserSettings.use_sqlite3 = int(user_settings["use_sqlite3"])
             user_settings = UserSettings.read_config("config.ini", "USER-LIBRARY")
-            UserSettings.user_library_name = user_settings["name"]
+            UserSettings.user_library_name = user_settings["library_table"]
+            UserSettings.loans_table_name = user_settings["loans_table"]
         except ValueError:
             print("Invalid config file")
             exit()
@@ -92,7 +94,8 @@ class UserSettings:
             "use_sqlite3": "1"
         }
         config_object["USER-LIBRARY"] = {
-            "name": "BookStore"
+            "library_table": "BookStore",
+            "loans_table": "Loans"
         }
         config_object["DB-CONNECTION"] = {
             "host": "mysql-server-ip",
