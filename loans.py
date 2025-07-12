@@ -11,9 +11,8 @@ class Loans:
     Collection of loans related methods
     """
 
-    db_table = "Loans"
     @staticmethod
-    def init_db(table = db_table, drop = False):
+    def init_db(table, drop = False):
         """
         Creates a new Loans table to store all loans information
         :param table:
@@ -32,7 +31,7 @@ class Loans:
         SqlDB.sql_query(init_query, table, drop, UserSettings.use_sqlite3)
 
     @staticmethod
-    def list_loans(table = db_table):
+    def list_loans(table):
         """
         Queries the database for all loans
         :param table:
@@ -69,7 +68,7 @@ class Loans:
         print()
 
     @staticmethod
-    def loan_book(table = db_table):
+    def loan_book(table):
         """
         Form for a user to loan a book
         :param table:
@@ -95,18 +94,18 @@ class Loans:
         if loan_entry.book.entry.available > 0:
             try:
                 loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-                loan_entry.save_to_db()
+                loan_entry.save_to_db(UserSettings.loans_table_name)
                 print(f" END ".center(60, "-"))
                 BookStore.loaned_one(loan_entry.book)
             except (ProgrammingError, sqlite3.OperationalError):
                 print(f"Table {table} not available")
                 print()
                 try:
-                    Loans.init_db()
+                    Loans.init_db(UserSettings.loans_table_name)
                     print(f"Created new table {table}")
                     print()
                     loan_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-                    loan_entry.save_to_db()
+                    loan_entry.save_to_db(UserSettings.loans_table_name)
                     BookStore.loaned_one(loan_entry.book)
                     print(f" END ".center(60, "-"))
                 except (ProgrammingError, sqlite3.OperationalError):
@@ -123,7 +122,7 @@ class Loans:
             return
 
     @staticmethod
-    def return_book(table = db_table):
+    def return_book(table):
         """
         Form for a user to receive a loaned book
         :param table:
@@ -155,10 +154,10 @@ class Loans:
         BookStore.return_one(book)
 
         delete_statement = f"""
-            DELETE FROM {Loans.db_table} 
+            DELETE FROM {UserSettings.loans_table_name} 
             WHERE ClientName = \"{order.client_name}\" AND BookName = \"{order.book.book.name}\";
         """
-        SqlDB.sql_query(delete_statement, Loans.db_table, use_sqlite3=UserSettings.use_sqlite3)
+        SqlDB.sql_query(delete_statement, UserSettings.loans_table_name, use_sqlite3=UserSettings.use_sqlite3)
 
         # Add some check to see the success of all the operations
         print(f"{order.client_name} returned {order.book.book.name}")
@@ -173,7 +172,7 @@ class Loans:
         :param library_name:
         :return: a LoansEntry object
         """
-        search_statement = f"""SELECT * FROM {Loans.db_table} 
+        search_statement = f"""SELECT * FROM {UserSettings.loans_table_name} 
             WHERE ClientName = \"{client_name}\" AND BookName = \"{book_name}\" AND LibraryName = \"{library_name}\";  
         """
         result = SqlDB.sql_query_result(search_statement, use_sqlite3=UserSettings.use_sqlite3)
@@ -197,7 +196,7 @@ class LoansEntry:
         typed_out += f"{self.book}"
         return typed_out
 
-    def save_to_db(self, table = Loans.db_table):
+    def save_to_db(self, table):
         """
         Save a singular loan in the database
         :param table:
