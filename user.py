@@ -571,21 +571,21 @@ class User:
                     print("Nothing here")
                     hold_clear = True
                 else:
-                    Loans.list_loans()
+                    Loans.list_loans(UserSettings.loans_table_name)
                     hold_clear = True
             elif option == 12:
                 if self.is_admin:
                     print("Nothing here")
                     hold_clear = True
                 else:
-                    Loans.loan_book()
+                    Loans.loan_book(UserSettings.loans_table_name)
                     hold_clear = True
             elif option == 13:
                 if self.is_admin:
                     print("Nothing here")
                     hold_clear = True
                 else:
-                    Loans.return_book()
+                    Loans.return_book(UserSettings.loans_table_name)
                     hold_clear = True
             elif option == 0:
                 self.request_exit = 1
@@ -602,7 +602,7 @@ class User:
         if UserSettings.at_cli:
             UserSettings.clear()
         UserSettings.user_library_name = input("Library name: ")
-        UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
+        UserSettings.edit_config("config.ini", "USER-LIBRARY", "library_table", UserSettings.user_library_name)
         BookStores.save_library_to_db(UserSettings.user_library_name)
         print()
 
