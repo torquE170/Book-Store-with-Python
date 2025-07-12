@@ -439,14 +439,19 @@ class BookStores:
     def __repr__(self):
         typed_out = f" {BookStores.db_table} ".center(60, "-")
         typed_out += "\n"
+
+        has_last_entry = False
         if not len(self.entries):
             typed_out += "Empty list\n"
         else:
             last_entry = self.entries.pop()
+            has_last_entry = True
+
         for entry in self.entries:
             typed_out += f"{entry}\n"
             typed_out += "-" * 60 + "\n"
-        if len(self.entries):
+
+        if has_last_entry:
             typed_out += f"{last_entry}\n"
         typed_out += f" END ".center(60, "-")
         typed_out += "\n"
