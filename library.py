@@ -441,12 +441,13 @@ class BookStores:
         typed_out += "\n"
         if not len(self.entries):
             typed_out += "Empty list\n"
-
-        last_entry = self.entries.pop()
+        else:
+            last_entry = self.entries.pop()
         for entry in self.entries:
             typed_out += f"{entry}\n"
             typed_out += "-" * 60 + "\n"
-        typed_out += f"{last_entry}\n"
+        if len(self.entries):
+            typed_out += f"{last_entry}\n"
         typed_out += f" END ".center(60, "-")
         typed_out += "\n"
         return typed_out
@@ -527,6 +528,16 @@ class BookStores:
         if UserSettings.at_cli:
             UserSettings.clear()
 
+        # Prevention against deleting the last library if it has loaned books
+        select_statement = f"""
+            SELECT LibraryName FROM {UserSettings.loans_table_name};
+        """
+        # a list of tuples
+        result = SqlDB.sql_query_result(select_statement, use_sqlite3=UserSettings.use_sqlite3)
+        has_orders = False
+        if len(result):
+            has_orders = True
+
         delete_by = ""
         opt = -1
         while opt != 0:
@@ -556,64 +567,76 @@ class BookStores:
             value = input("Library: ")
             value = f"\"{value}\""
 
-        select_query = f"""
-            SELECT ID, Library FROM {table}
-            WHERE {delete_by} = {value};
-        """
-        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
-        name = ""
-        if delete_by == "ID":
-            name = input("Confirm by entering library name: ")
-            if result[0][1] == name:
-                print("Confirmed")
-            else:
-                print("Canceled")
-                print()
-                return
-
-        if delete_by == "Library":
-            db_id = int(input("Confirm by entering library id: "))
-            if result[0][0] == db_id:
-                print("Confirmed")
-            else:
-                print("Canceled")
-                print()
-                return
-
-        # Distribute the books to the rest of the libraries
-
-        # Change the current library to the next one or previous if last
-        select_query = f"""
-            SELECT * FROM {table};
-        """
-        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
-        if len(result) < 1:
-            UserSettings.user_library_name = "n/a"
-        else:
-            for i in range(len(result) - 1):
-                if delete_by == "Library" and value.strip("\"") == result[i][1] or delete_by == "ID" and name == result[i][1]:
-                    UserSettings.user_library_name = result[i + 1][1]
-            if delete_by == "Library" and value.strip("\"") == result[len(result) - 1][1] or delete_by == "ID" and name == result[len(result) - 1][1]:
-                UserSettings.user_library_name = result[len(result) - 2][1]
-            UserSettings.edit_config("config.ini", "USER-LIBRARY", "name", UserSettings.user_library_name)
-
-        # Delete the library from the library list
-        delete_statement = f"""
-            DELETE FROM {table} WHERE {delete_by}={value};
-        """
-        SqlDB.sql_query(delete_statement, table, use_sqlite3=UserSettings.use_sqlite3)
         print()
+
         select_query = f"""
             SELECT ID, Library FROM {table}
             WHERE {delete_by} = {value};
         """
         result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
-        if delete_by == "Library":
-            conclusion_word = "name"
+        is_last_library = False
+        if len(result) < 2:
+            is_last_library = True
+
+        if not is_last_library or not has_orders:
+            name = ""
+            if delete_by == "ID":
+                name = input("Confirm by entering library name: ")
+                if result[0][1] == name:
+                    print("Confirmed")
+                else:
+                    print("Canceled")
+                    print()
+                    return
+
+            if delete_by == "Library":
+                db_id = int(input("Confirm by entering library id: "))
+                if result[0][0] == db_id:
+                    print("Confirmed")
+                else:
+                    print("Canceled")
+                    print()
+                    return
+
+            # Distribute the books to the rest of the libraries
+
+
+            # Change the current library to the next or previous one if last
+            select_query = f"""
+                SELECT * FROM {table};
+            """
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+            if len(result) < 1:
+                UserSettings.user_library_name = "n/a"
+            else:
+                for i in range(len(result) - 1):
+                    if delete_by == "Library" and value.strip("\"") == result[i][1] or delete_by == "ID" and name == result[i][1]:
+                        UserSettings.user_library_name = result[i + 1][1]
+                if delete_by == "Library" and value.strip("\"") == result[len(result) - 1][1] or delete_by == "ID" and name == result[len(result) - 1][1]:
+                    UserSettings.user_library_name = result[len(result) - 2][1]
+                UserSettings.edit_config("config.ini", "USER-LIBRARY", "library_table", UserSettings.user_library_name)
+
+            # Delete the library from the library list
+            delete_statement = f"""
+                DELETE FROM {table} WHERE {delete_by}={value};
+            """
+            SqlDB.sql_query(delete_statement, table, use_sqlite3=UserSettings.use_sqlite3)
+            print()
+            select_query = f"""
+                SELECT ID, Library FROM {table}
+                WHERE {delete_by} = {value};
+            """
+            result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+            if delete_by == "Library":
+                conclusion_word = "name"
+            else:
+                conclusion_word = delete_by
+            if len(result) == 0:
+                print(f"Library identified by {conclusion_word}: {value} has been deleted")
+                print()
         else:
-            conclusion_word = delete_by
-        if len(result) == 0:
-            print(f"Library identified by {conclusion_word}: {value} has been deleted")
+            print(f"Cannot delete last library: \"{result[0][1]}\" while books are still loaned from it")
+            print("Return all the books before trying again")
             print()
 
 
