@@ -26,6 +26,8 @@ and uses `clear` commands for windows and linux
    - modify quantities and available counters 
    - distribute equally books that aren't present elsewhere
    - drop table in the database
+   - don't delete if it's the last library and there are still loaned books from it
+2) Add function to scan for tables that match a library table description, so the library names table will auto-generate 
 
 ### Technical information
 #### 1) Used python packages:
