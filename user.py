@@ -323,7 +323,7 @@ class User:
         self.has_password = 1
         self.correct_password = 1
         print("Password has been set")
-        User.wait_for_enter()
+        UserSettings.wait_for_enter()
         print()
 
     def set_full_name(self):
@@ -397,7 +397,7 @@ class User:
         SqlDB.sql_query(update_query, User.db_table, use_sqlite3=UserSettings.use_sqlite3)
         print()
         print("Password has been reset")
-        User.wait_for_enter()
+        UserSettings.wait_for_enter()
 
         query = f"""SELECT Username, isAdmin, isActive 
         FROM {User.db_table} 
@@ -651,12 +651,6 @@ class User:
         '''
         SqlDB.sql_query(query_admin, table, use_sqlite3=UserSettings.use_sqlite3)
         return None
-
-    @staticmethod
-    def wait_for_enter():
-        print()
-        input("Press enter to continue...")
-        print()
 
     @staticmethod
     def hashpw(password, salt):

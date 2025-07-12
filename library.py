@@ -505,9 +505,10 @@ class BookStores:
         Prints all the available libraries
         :param table:
         """
-
+        if UserSettings.at_cli:
+            UserSettings.clear()
         BookStores.scan_library_tables()
-
+        UserSettings.wait_for_enter()
         if UserSettings.at_cli:
             UserSettings.clear()
         stores_list = BookStores()

@@ -110,6 +110,12 @@ class UserSettings:
             config_object.write(conf)
 
     @staticmethod
+    def wait_for_enter():
+        print()
+        input("Press enter to continue...")
+        print()
+
+    @staticmethod
     def read_menu_option(prompt):
         """
         Makes sure user enters an int
