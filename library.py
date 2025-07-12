@@ -505,6 +505,9 @@ class BookStores:
         Prints all the available libraries
         :param table:
         """
+
+        BookStores.scan_library_tables()
+
         if UserSettings.at_cli:
             UserSettings.clear()
         stores_list = BookStores()
@@ -583,6 +586,7 @@ class BookStores:
         if len(result) < 2:
             is_last_library = True
 
+        # it will delete only if library is not last and no books are loaned from it
         if not is_last_library or not has_orders:
             name = ""
             if delete_by == "ID":
@@ -643,6 +647,37 @@ class BookStores:
             print(f"Cannot delete last library: \"{result[0][1]}\" while books are still loaned from it")
             print("Return all the books before trying again")
             print()
+
+    @staticmethod
+    def scan_library_tables():
+
+        if UserSettings.use_sqlite3:
+            print("Please use a dedicated mysql server if you want to use the scan method")
+            print()
+            return
+
+        tables_query = """SHOW TABLES;"""
+        tables_result = SqlDB.sql_query_result(tables_query, use_sqlite3=UserSettings.use_sqlite3)
+        tables = list()
+        for entry in tables_result:
+            tables.append(entry[0])
+
+        i = 0
+        while i < len(tables):
+            query = f"""DESC {tables[i]};"""
+            result = SqlDB.sql_query_result(query, use_sqlite3=UserSettings.use_sqlite3)
+            is_library = False
+            for j in range(len(result)):
+                if result[j][0] == "Author" or result[j][0] == "Publisher":
+                    is_library = True
+                    break
+            if not is_library:
+                tables.pop(i)
+            else:
+                i += 1
+
+        for table in tables:
+            BookStores.save_library_to_db(table)
 
 
 class BookStoresEntry:
