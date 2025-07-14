@@ -502,7 +502,8 @@ class User:
                 print("12 - Rent a book")
                 print("13 - Return a book")
             print()
-            print("0 - Exit")
+            print(" 0 - Exit")
+            print()
             option = UserSettings.read_menu_option(">> ")
             print()
             if option == 1:
