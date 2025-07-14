@@ -5,6 +5,9 @@
 1) Manage users(list, add, remove, promote, demote, user status - active/deactivated)
 ### As a logged-in user you can:
 1) Select working library (possibility to have multiple individual libraries)
+    - scan the database to find library tables
+    - list all the libraries
+    - remove libraries
 2) Manage available books(add, remove)
 2) Lend books to clients
 3) Receive returned books from clients
@@ -29,7 +32,12 @@ and uses `clear` commands for windows and linux
    - don't delete if it's the last library and there are still loaned books from it 
 
 ### Technical information
-#### 1) Used python packages:
+#### 1) Requirements:
+   - have python installed, you can check to see if it's installed by typing `py --version` in terminal
+   - have set up a standalone mysql server with `user = python-user`, `password = python-password` 
+     and `database = python` which would be the database name or schema, 
+     highly recommended to set up a different password
+#### 2) Used python packages:
    - pip v25.1.1
    - bcrypt v4.3.0 `pip install bcrypt` - for hashing and checking clear text password against hash
    - mysql-connector-python v9.3.0 `pip install mysql-connector-python` - for connecting to a standalone mysql server
@@ -38,12 +46,7 @@ and uses `clear` commands for windows and linux
    - uuid (default Python library) - for generating a unique session ID for each user once they log in
    - sqlite3 (default Python library) - for using a `.sqlite3` database file instead of a mysql server in case that requirement isn't met
    - sys, os (default Python library) - for clearing the screen on windows and linux systems when running in terminal
-#### 2) Requirements:
-   - have python installed, you can check to see if it's installed by typing `py --version` in terminal
-   - have set up a standalone mysql server with `user = python-user`, `password = python-password` 
-     and `database = python` which would be the database name or schema, 
-     highly recommended to set up a different password
- 
+
 ## First time use instructions
 - Start the program at terminal by running `py book_store.py` so it generates the required files, it will exit automatically
 - Look for `config.ini` and modify `at_cli = 0` to `at_cli = 1` so the terminal clears and hides passwords, start the program again
