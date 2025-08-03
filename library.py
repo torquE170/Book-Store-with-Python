@@ -10,7 +10,7 @@ class Library:
     Is a list of LibraryEntries
     """
 
-    def __init__(self, entries = None):
+    def __init__(self, entries=None):
         if entries is None:
             entries = list()
         self.entries = entries
@@ -44,7 +44,7 @@ class LibraryEntry:
     Is a Book with quantity and availability
     """
 
-    def __init__(self, book: Book, quantity = None, available = None):
+    def __init__(self, book: Book, quantity=None, available=None):
         self.book = book
         self.quantity = quantity
         if available is None:
@@ -72,11 +72,13 @@ class LibraryEntry:
 
 class BookStore:
     """
-    Is a list if BookStoreEntries
+    Is a list of BookStoreEntries
     """
 
     db_table = "BookStore"
-    def __init__(self, entries = None):
+
+    def __init__(self, entries=None):
+        # recheck how objects are made - entries list is sometimes empty
         if entries is None:
             entries = list()
         self.entries = entries
@@ -86,12 +88,12 @@ class BookStore:
         typed_out += "\n"
         if not len(self.entries):
             typed_out += "Empty library\n"
-
-        last_entry = self.entries.pop()
-        for entry in self.entries:
-            typed_out += f"{entry}\n"
-            typed_out += "-" * 60 + "\n"
-        typed_out += f"{last_entry}\n"
+        else:
+            last_entry = self.entries.pop()
+            for entry in self.entries:
+                typed_out += f"{entry}\n"
+                typed_out += "-" * 60 + "\n"
+            typed_out += f"{last_entry}\n"
         typed_out += f" END ".center(60, "-")
         typed_out += "\n"
         return typed_out
@@ -104,8 +106,8 @@ class BookStore:
         :param new_entry:
         """
         try:
-            new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-            new_entry.save_entry_to_db(table)
+            new_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+            new_entry.save_entry_to_db(new_id, table)
         except (ProgrammingError, sqlite3.OperationalError):
             print(f"Table {table} not available")
             print()
@@ -113,8 +115,8 @@ class BookStore:
                 BookStore.init_db(table)
                 print(f"Created new table {table}")
                 print()
-                new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-                new_entry.save_entry_to_db(table)
+                new_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                new_entry.save_entry_to_db(new_id, table)
             except (ProgrammingError, sqlite3.OperationalError):
                 print(f"Tried to make new {table}, and failed")
                 print("Exiting")
@@ -126,7 +128,7 @@ class BookStore:
             return
 
     @staticmethod
-    def add_entry(table = db_table):
+    def add_entry(table=db_table):
         """
         Add a book from keyboard and save it to database
         :param table:
@@ -136,8 +138,8 @@ class BookStore:
         print(f" Add book ".center(60, "-"))
         new_entry = BookStoreEntry.get_entry()
         try:
-            new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-            new_entry.save_entry_to_db(table)
+            new_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+            new_entry.save_entry_to_db(new_id, table)
         except (ProgrammingError, sqlite3.OperationalError):
             print(f"Table {table} not available")
             print()
@@ -145,8 +147,8 @@ class BookStore:
                 BookStore.init_db(table)
                 print(f"Created new table {table}")
                 print()
-                new_entry.db_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
-                new_entry.save_entry_to_db(table)
+                new_id = SqlDB.get_last_id(table, UserSettings.use_sqlite3) + 1
+                new_entry.save_entry_to_db(new_id, table)
             except (ProgrammingError, sqlite3.OperationalError):
                 print(f"Tried to make new {table}, and failed")
                 print("Exiting")
@@ -158,14 +160,14 @@ class BookStore:
             return
 
     @staticmethod
-    def list_entries(table = db_table):
+    def list_entries(table=db_table, print_out=True):
         """
-        List all library entries from a specific table
+        List all library entries from a specific library table
         :param table:
+        :param print_out: Set to true to print result to console rather than returning it
         """
         if UserSettings.at_cli:
             UserSettings.clear()
-        book_store = BookStore()
         list_query = f"""
             SELECT ID, Name, Author, Quantity, Available FROM {table};
         """
@@ -174,13 +176,20 @@ class BookStore:
         except (ProgrammingError, sqlite3.OperationalError):
             print(f"Table {table} not available")
             print()
-            return
+            return None
+        book_store_list = list()
         for entry in books_list:
-            book_store.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
-        print(book_store)  # or return it
+            book_store_list.append(
+                BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
+        if print_out:
+            book_store = BookStore(book_store_list)
+            print(book_store)
+            return None
+        else:
+            return book_store_list
 
     @staticmethod
-    def search_book(table = db_table):
+    def search_book(table=db_table):
         """
         Fuzzy search a library table by either book name or author
         Prints the results
@@ -223,7 +232,8 @@ class BookStore:
             print()
             return
         for entry in result_list:
-            queried_books.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
+            queried_books.entries.append(
+                BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
         if len(queried_books.entries):
             print(queried_books)  # or return it
         else:
@@ -238,13 +248,15 @@ class BookStore:
         :return: A single book store entry object
         """
         queried_books = BookStore()
+        # if multiple words add split and formulate '%keyword%' into '%keyword[0]%' or '%keyword[1]%' or '%keyword[2]%'
         search_query = f"""
             SELECT ID, Name, Author, Quantity, Available FROM {table} WHERE Name LIKE \'%{keyword}%\';
         """
         try:
             result_list = SqlDB.sql_query_result(search_query, use_sqlite3=UserSettings.use_sqlite3)
             for entry in result_list:
-                queried_books.entries.append(BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
+                queried_books.entries.append(
+                    BookStoreEntry(LibraryEntry(Book(entry[1], entry[2]), entry[3], entry[4]), entry[0]))
             if len(queried_books.entries):
                 return queried_books.entries[0]
             else:
@@ -254,9 +266,8 @@ class BookStore:
             print()
             return None
 
-
     @staticmethod
-    def delete_book(table = db_table):
+    def delete_book(table=db_table):
         """
         Deletes a book from database by either ID or Name
         :param table:
@@ -293,6 +304,7 @@ class BookStore:
             value = input("Name: ")
             value = f"\"{value}\""
 
+        # recheck delete logic
         delete_statement = f"""
             DELETE FROM {table} WHERE {delete_by}={value};
         """
@@ -326,16 +338,17 @@ class BookStore:
         SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
 
     @staticmethod
-    def add_stock(book : LibraryEntry, quantity : int, available : int):
+    def add_stock(table, book: LibraryEntry, quantity: int, available: int):
         """
         When trying to add a book that already exists, this method will be called and will
         increment the quantity and availability of that book
+        :param table:
         :param book:
         :param quantity:
         :param available:
         """
         query = f"""
-            UPDATE {UserSettings.user_library_name} 
+            UPDATE {table} 
             SET Quantity = {book.entry.quantity + quantity}, Available = {book.entry.available + available}
             WHERE Name = \"{book.entry.book.name}\";
         """
@@ -355,7 +368,7 @@ class BookStore:
         SqlDB.sql_query(query, UserSettings.user_library_name, use_sqlite3=UserSettings.use_sqlite3)
 
     @staticmethod
-    def init_db(table, drop = False):
+    def init_db(table, drop=False):
         """
         Will initialize a table for storing books
         :param table: will be the library name
@@ -381,7 +394,7 @@ class BookStoreEntry:
     Is a LibraryEntry with an ID, useful for storing in database
     """
 
-    def __init__(self, store_entry: LibraryEntry, db_id = None):
+    def __init__(self, store_entry: LibraryEntry, db_id=None):
         self.entry = store_entry
         self.db_id = db_id
 
@@ -401,27 +414,28 @@ class BookStoreEntry:
         book_store_entry = BookStoreEntry(new_lib_entry)
         return book_store_entry
 
-    def save_entry_to_db(self, table = BookStore.db_table):
+    def save_entry_to_db(self, new_id, table=BookStore.db_table):
         """
         Saves the object that is called on, to database as a book store entry
         If the book is already in the table, it will increment quantity and availability
+        :param new_id:
         :param table:
         :return: self
         """
         insert_query = f"""
             INSERT INTO {table} (ID, Name, Author, Quantity, Available)
-            VALUES ({self.db_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
+            VALUES ({new_id}, "{self.entry.book.name}", "{self.entry.book.author}", {self.entry.quantity}, {self.entry.available});
         """
         try:
             SqlDB.sql_query(insert_query, table, use_sqlite3=UserSettings.use_sqlite3)
-            print(f"Book added! \"{self.entry.book.name}\" has been saved to database")
+            print(f"Book added! \"{self.entry.book.name}\" has been saved to {table} library")
             print()
         except (IntegrityError, sqlite3.IntegrityError):
             print("Book already in library. Adding available copies")
             print()
-            book = BookStore.search_book_by_name(self.entry.book.name, UserSettings.user_library_name)
+            book = BookStore.search_book_by_name(self.entry.book.name, table)
             if book is not None:
-                BookStore.add_stock(book, self.entry.quantity, self.entry.available)
+                BookStore.add_stock(table, book, self.entry.quantity, self.entry.available)
         return self
 
 
@@ -431,7 +445,8 @@ class BookStores:
     """
 
     db_table = "Libraries"
-    def __init__(self, entries = None):
+
+    def __init__(self, entries=None):
         if entries is None:
             entries = list()
         self.entries = entries
@@ -458,7 +473,7 @@ class BookStores:
         return typed_out
 
     @staticmethod
-    def init_db(table = db_table, drop = False):
+    def init_db(table=db_table, drop=False):
         """
         Called when there is no Libraries table to send a CREATE TABLE
         :param table:
@@ -474,7 +489,7 @@ class BookStores:
         SqlDB.sql_query(init_query, table, drop, UserSettings.use_sqlite3)
 
     @staticmethod
-    def save_library_to_db(library_name, table = db_table):
+    def save_library_to_db(library_name, table=db_table):
         """
         Saves a library name to the Library table
         :param library_name:
@@ -500,13 +515,15 @@ class BookStores:
         print()
 
     @staticmethod
-    def list_libraries(table = db_table):
+    def list_libraries(table=db_table):
         """
+        Scans for library tables that aren't saved to the list yet\n
         Prints all the available libraries
         :param table:
         """
         if UserSettings.at_cli:
             UserSettings.clear()
+        # look for tables that are libraries and not save in the libraries list
         BookStores.scan_library_tables()
         UserSettings.wait_for_enter()
         if UserSettings.at_cli:
@@ -527,12 +544,11 @@ class BookStores:
         print(stores_list)  # or return it
 
     @staticmethod
-    def del_library(table = db_table):
+    def del_library(table=db_table):
         """
         Deletes a library from the Library table
         :param table:
         """
-        # add functionality, distribute books from that library to all other libraries
         # then drop the library table
         if UserSettings.at_cli:
             UserSettings.clear()
@@ -578,21 +594,33 @@ class BookStores:
 
         print()
 
-        select_query = f"""
-            SELECT ID, Library FROM {table}
-            WHERE {delete_by} = {value};
+        all_libraries_query = f"""
+            SELECT * FROM {table};
         """
-        result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
+        all_libraries_list = SqlDB.sql_query_result(all_libraries_query, use_sqlite3=UserSettings.use_sqlite3)
         is_last_library = False
-        if len(result) < 2:
+        if len(all_libraries_list) < 2:
             is_last_library = True
+
+        target_library_name = list()
+        for entry in all_libraries_list:
+            if delete_by == "ID":
+                if value == entry[0]:
+                    target_library_name.append(entry[0])
+                    target_library_name.append(entry[1])
+                    break
+            if delete_by == "Library":
+                if value.strip("\"") == entry[1]:
+                    target_library_name.append(entry[0])
+                    target_library_name.append(entry[1])
+                    break
 
         # it will delete only if library is not last and no books are loaned from it
         if not is_last_library or not has_orders:
             name = ""
             if delete_by == "ID":
                 name = input("Confirm by entering library name: ")
-                if result[0][1] == name:
+                if target_library_name[1] == name:
                     print("Confirmed")
                 else:
                     print("Canceled")
@@ -601,7 +629,7 @@ class BookStores:
 
             if delete_by == "Library":
                 db_id = int(input("Confirm by entering library id: "))
-                if result[0][0] == db_id:
+                if target_library_name[0] == db_id:
                     print("Confirmed")
                 else:
                     print("Canceled")
@@ -609,7 +637,82 @@ class BookStores:
                     return
 
             # Distribute the books to the rest of the libraries
+            # Get a list of books from the library in question
+            target_library_book_list = BookStore.list_entries(target_library_name[1], False)
+            target_libraries = list()
+            for entry in all_libraries_list:
+                if entry[1] == target_library_name[1]:
+                    continue
+                else:
+                    target_libraries.append((entry[0], entry[1]))
 
+            # here we'll deal with the books that we already have in a library
+            i = 0
+            distributed_books = 0
+            while i < len(target_library_book_list):
+                book = target_library_book_list[i]
+                target_libraries_inv_sel = list(target_libraries)
+                for library in target_libraries:
+                    library_book_list = BookStore.list_entries(library[1], False)
+                    for in_store_book in library_book_list:
+                        if book.entry.book.name == in_store_book.entry.book.name:
+                            # we are eliminating libraries with that book
+                            target_libraries_inv_sel.remove((library[0], library[1]))
+                            break
+                    else:
+                        continue
+                    if library == target_libraries[-1]:
+                        break
+
+                # now we have a list of libraries that don't have that book
+                if len(target_libraries_inv_sel):
+                    # distribute books to the inverse selection of libraries
+                    index_for_distribution = distributed_books % len(target_libraries_inv_sel)
+                    BookStore.save_entry_to_store(target_libraries_inv_sel[index_for_distribution][1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available)))
+                    target_library_book_list.pop(i)
+                    distributed_books += 1
+                else:
+                    # distribute books to all the libraries
+                    index_for_distribution = distributed_books % len(target_libraries)
+                    BookStore.save_entry_to_store(target_libraries_inv_sel[index_for_distribution][1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available)))
+                    target_library_book_list.pop(i)
+                    distributed_books += 1
+
+            # i = 0
+            # while i < len(target_library_book_list):
+            #     book = target_library_book_list[i]
+            #     for library in target_libraries:
+            #         library_book_list = BookStore.list_entries(library[1], False)
+            #         j = 0
+            #         for in_store_book in library_book_list:
+            #             if book.entry.book.name == in_store_book.entry.book.name:
+            #                 BookStore.save_entry_to_store(library[1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available), in_store_book.db_id))
+            #                 target_library_book_list.pop(i)
+            #                 break
+            #             else:
+            #                 j += 1
+            #         else:
+            #             i += 1
+            #             continue
+            #         break
+
+            # here we'll know the remaining books aren't in any libraries
+            distributed_books = 0
+            distribution_split = - ( - len(target_library_book_list) // len(target_libraries) )
+            for library in target_libraries:
+                i = 0  # "i" is not moving because every book that we go through we pop out of the list
+                while i < len(target_library_book_list):
+                    book = target_library_book_list[i]
+                    if distributed_books < distribution_split:
+                        BookStore.save_entry_to_store(library[1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available), in_store_book.db_id))
+                        target_library_book_list.pop(i)
+                        distributed_books += 1
+                    else:
+                        distributed_books = 0
+                        break
+
+            drop_query = f"""DROP TABLE {target_library_name[1]};"""
+            SqlDB.sql_query(drop_query, target_library_name[1], UserSettings.use_sqlite3)
 
             # Change the current library to the next or previous one if last
             select_query = f"""
@@ -620,9 +723,11 @@ class BookStores:
                 UserSettings.user_library_name = "n/a"
             else:
                 for i in range(len(result) - 1):
-                    if delete_by == "Library" and value.strip("\"") == result[i][1] or delete_by == "ID" and name == result[i][1]:
+                    if delete_by == "Library" and value.strip("\"") == result[i][1] or delete_by == "ID" and name == \
+                            result[i][1]:
                         UserSettings.user_library_name = result[i + 1][1]
-                if delete_by == "Library" and value.strip("\"") == result[len(result) - 1][1] or delete_by == "ID" and name == result[len(result) - 1][1]:
+                if delete_by == "Library" and value.strip("\"") == result[len(result) - 1][
+                    1] or delete_by == "ID" and name == result[len(result) - 1][1]:
                     UserSettings.user_library_name = result[len(result) - 2][1]
                 UserSettings.edit_config("config.ini", "USER-LIBRARY", "library_table", UserSettings.user_library_name)
 
@@ -638,14 +743,14 @@ class BookStores:
             """
             result = SqlDB.sql_query_result(select_query, use_sqlite3=UserSettings.use_sqlite3)
             if delete_by == "Library":
-                conclusion_word = "name"
+                id_word = "name"
             else:
-                conclusion_word = delete_by
+                id_word = delete_by
             if len(result) == 0:
-                print(f"Library identified by {conclusion_word}: {value} has been deleted")
+                print(f"Library identified by {id_word}: {value} has been deleted")
                 print()
         else:
-            print(f"Cannot delete last library: \"{result[0][1]}\" while books are still loaned from it")
+            print(f"Cannot delete last library: \"{target_library_name[1]}\" while books are still loaned from it")
             print("Return all the books before trying again")
             print()
 
@@ -682,6 +787,9 @@ class BookStores:
 
 
 class BookStoresEntry:
+    """
+    An object for storing an id and library name
+    """
 
     def __init__(self, db_id=0, name=""):
         self.db_id = db_id
