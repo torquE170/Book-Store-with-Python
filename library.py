@@ -544,7 +544,7 @@ class BookStores:
         print(stores_list)  # or return it
 
     @staticmethod
-    def del_library(table=db_table):
+    def del_library(table=db_table, use_sqlite3=UserSettings.use_sqlite3):
         """
         Deletes a library from the Library table
         :param table:
@@ -552,6 +552,11 @@ class BookStores:
         # then drop the library table
         if UserSettings.at_cli:
             UserSettings.clear()
+
+        if use_sqlite3:
+            print("Delete for sqlite3 not yet implemented")
+            print()
+            return None
 
         # Prevention against deleting the last library if it has loaned books
         select_statement = f"""
@@ -581,7 +586,7 @@ class BookStores:
                 break
             if opt == 0:
                 print("Delete operation canceled")
-                return
+                return None
         if UserSettings.at_cli:
             UserSettings.clear()
 
@@ -625,7 +630,7 @@ class BookStores:
                 else:
                     print("Canceled")
                     print()
-                    return
+                    return None
 
             if delete_by == "Library":
                 db_id = int(input("Confirm by entering library id: "))
@@ -634,7 +639,7 @@ class BookStores:
                 else:
                     print("Canceled")
                     print()
-                    return
+                    return None
 
             # Distribute the books to the rest of the libraries
             # Get a list of books from the library in question
@@ -647,7 +652,7 @@ class BookStores:
                     target_libraries.append((entry[0], entry[1]))
 
             # here we'll deal with the books that we already have in a library
-            i = 0
+            i = 0  # "i" is not moving because every book that we go through we pop out of the list
             distributed_books = 0
             while i < len(target_library_book_list):
                 book = target_library_book_list[i]
@@ -674,27 +679,9 @@ class BookStores:
                 else:
                     # distribute books to all the libraries
                     index_for_distribution = distributed_books % len(target_libraries)
-                    BookStore.save_entry_to_store(target_libraries_inv_sel[index_for_distribution][1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available)))
+                    BookStore.save_entry_to_store(target_libraries[index_for_distribution][1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available)))
                     target_library_book_list.pop(i)
                     distributed_books += 1
-
-            # i = 0
-            # while i < len(target_library_book_list):
-            #     book = target_library_book_list[i]
-            #     for library in target_libraries:
-            #         library_book_list = BookStore.list_entries(library[1], False)
-            #         j = 0
-            #         for in_store_book in library_book_list:
-            #             if book.entry.book.name == in_store_book.entry.book.name:
-            #                 BookStore.save_entry_to_store(library[1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available), in_store_book.db_id))
-            #                 target_library_book_list.pop(i)
-            #                 break
-            #             else:
-            #                 j += 1
-            #         else:
-            #             i += 1
-            #             continue
-            #         break
 
             # here we'll know the remaining books aren't in any libraries
             distributed_books = 0
@@ -753,6 +740,7 @@ class BookStores:
             print(f"Cannot delete last library: \"{target_library_name[1]}\" while books are still loaned from it")
             print("Return all the books before trying again")
             print()
+        return None
 
     @staticmethod
     def scan_library_tables():

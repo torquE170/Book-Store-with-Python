@@ -537,7 +537,7 @@ class User:
                     User.set_active_by_user(1)
                     hold_clear = True
                 else:
-                    BookStores.del_library()
+                    BookStores.del_library(use_sqlite3=UserSettings.use_sqlite3)
                     hold_clear = True
             elif option == 7:
                 if self.is_admin:
