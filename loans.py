@@ -173,7 +173,7 @@ class Loans:
         :return: a LoansEntry object
         """
         search_statement = f"""SELECT * FROM {UserSettings.loans_table_name} 
-            WHERE ClientName = \"{client_name}\" AND BookName = \"{book_name}\" AND LibraryName = \"{library_name}\";  
+            WHERE ClientName = \"{client_name}\" AND BookName = \"{book_name}\";  
         """
         result = SqlDB.sql_query_result(search_statement, use_sqlite3=UserSettings.use_sqlite3)
         order = LoansEntry(result[0][0], result[0][1], LibraryEntry(Book(result[0][2], result[0][3])))
