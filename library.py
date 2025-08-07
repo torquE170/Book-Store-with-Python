@@ -547,6 +547,7 @@ class BookStores:
     def del_library(table=db_table, use_sqlite3=UserSettings.use_sqlite3):
         """
         Deletes a library from the Library table
+        :param use_sqlite3:
         :param table:
         """
         # then drop the library table
@@ -651,6 +652,7 @@ class BookStores:
                 else:
                     target_libraries.append((entry[0], entry[1]))
 
+            # if this is not the last library, then we can distribute the books
             if not is_last_library:
                 # here we'll deal with the books that we already have in a library
                 i = 0  # "i" is not moving because every book that we go through we pop out of the list
@@ -671,7 +673,6 @@ class BookStores:
                             break
 
                     # now we have a list of libraries that don't have that book
-
                     if len(target_libraries_inv_sel):
                         # distribute books to the inverse selection of libraries
                         index_for_distribution = distributed_books % len(target_libraries_inv_sel)
