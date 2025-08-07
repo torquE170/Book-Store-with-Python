@@ -431,7 +431,7 @@ class BookStoreEntry:
             print(f"Book added! \"{self.entry.book.name}\" has been saved to {table} library")
             print()
         except (IntegrityError, sqlite3.IntegrityError):
-            print("Book already in library. Adding available copies")
+            print(f"Book \"{self.entry.book.name}\" already in library. Adding available copies")
             print()
             book = BookStore.search_book_by_name(self.entry.book.name, table)
             if book is not None:
@@ -685,21 +685,6 @@ class BookStores:
                         BookStore.save_entry_to_store(target_libraries[index_for_distribution][1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available)))
                         target_library_book_list.pop(i)
                         distributed_books += 1
-
-                # here we'll know the remaining books aren't in any libraries
-                distributed_books = 0
-                distribution_split = - ( - len(target_library_book_list) // len(target_libraries) )
-                for library in target_libraries:
-                    i = 0  # "i" is not moving because every book that we go through we pop out of the list
-                    while i < len(target_library_book_list):
-                        book = target_library_book_list[i]
-                        if distributed_books < distribution_split:
-                            BookStore.save_entry_to_store(library[1], BookStoreEntry(LibraryEntry(Book(book.entry.book.name, book.entry.book.author), book.entry.quantity, book.entry.available), in_store_book.db_id))
-                            target_library_book_list.pop(i)
-                            distributed_books += 1
-                        else:
-                            distributed_books = 0
-                            break
 
             drop_query = f"""DROP TABLE {target_library_name[1]};"""
             SqlDB.sql_query(drop_query, target_library_name[1], UserSettings.use_sqlite3)
