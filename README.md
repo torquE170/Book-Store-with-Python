@@ -24,12 +24,7 @@ and uses `clear` commands for windows and linux
 1) A txt log file with login time, date and a unique session id so the app keeps a record
 
 ## Next steps
-1) When removing a library, add functionality:
-   - distribute books in that library to other libraries that have more of that book
-   - modify quantities and available counters 
-   - distribute equally books that aren't present elsewhere
-   - drop table in the database
-   - don't delete if it's the last library and there are still loaned books from it 
+1) When removing a library, add functionality for sqlite3 as well
 
 ### Technical information
 #### 1) Requirements:
