@@ -23,10 +23,7 @@ and uses `clear` commands for windows and linux
 ## A log text file
 1) A txt log file with login time, date and a unique session id so the app keeps a record
 
-## Next steps
-1) When removing a library, add functionality for sqlite3 as well
-
-### Technical information
+## Technical information
 #### 1) Requirements:
    - have python installed, you can check to see if it's installed by typing `py --version` in terminal
    - have set up a standalone mysql server with `user = python-user`, `password = python-password` 
@@ -41,6 +38,9 @@ and uses `clear` commands for windows and linux
    - uuid (default Python library) - for generating a unique session ID for each user once they log in
    - sqlite3 (default Python library) - for using a `.sqlite3` database file instead of a mysql server in case that requirement isn't met
    - sys, os (default Python library) - for clearing the screen on windows and linux systems when running in terminal
+
+## Next steps
+1) When removing a library, add functionality for sqlite3 as well
 
 ## First time use instructions
 - Start the program at terminal by running `py book_store.py` so it generates the required files, it will exit automatically
